@@ -1,5 +1,15 @@
 #include <SD.h>
 
+#define DATA_START  2
+#define DATA_END  9
+
+#define nWRITE  A0
+#define nREAD A1
+#define CON_A A2
+#define CON_B  A3
+#define CON_C  A4
+#define CON_DATA A5
+
 void setup() {
 
   
@@ -16,6 +26,7 @@ void setup() {
   Serial.println("Starting ROM Read");
   long int startTime = millis(); 
   unsigned int address = 0;
+  assertReset();
   assertWrite();
   while(romFile.available()){
     unsigned int offsetAddress = address + 0x4000;
@@ -46,17 +57,25 @@ void loop() {
 }
 
 void setupPinsForWrite(){
-  DDRD = B11111100;
-  DDRB = DDRB | B00000011;
-  DDRC = DDRC | B111111;
-  Serial.println("\nSetting Port D2-7, B0-1, C0-5 as Outputs");
+  
+  for(int i = DATA_START; i<=DATA_END; i++){
+    pinMode(i, OUTPUT);
+  }
+  pinMode(nREAD, OUTPUT);
+  pinMode(nWRITE, OUTPUT);
+  pinMode(CON_A, OUTPUT);
+  pinMode(CON_B, OUTPUT);
+  pinMode(CON_C, OUTPUT);
+  pinMode(CON_DATA, OUTPUT);
 }
 void setDataPinValue(byte data){
   // Serial.println(data);
   // Put lower 6 bits onto port D2-7
   // Put upper 8 bits onto port B0-1
-  PORTD = (((data << 2) & 0xFC)) | PORTD & 0x3 ;
-  PORTB = (data >> 6) & 0x3 | PORTB & 0xFC;
+  for(unsigned int i = DATA_START; i<=DATA_END; i++){
+    unsigned int currentBit = i-2;
+    digitalWrite(i, bitRead(data, currentBit));
+  }
 }
 
 void initializeSDCard(int pin) {
@@ -73,39 +92,56 @@ void initializeSDCard(int pin) {
   }
 }
 void latchData(){
-  PORTC = (PORTC & 0x03) | B010000;
-  PORTC = (PORTC & 0x03) | B110000;
-  PORTC = (PORTC & 0x03) | B010000;
+  digitalWrite(CON_A, 0);
+  digitalWrite(CON_B, 0);
+  digitalWrite(CON_C, 1);
+  digitalWrite(CON_DATA, 0);
+  digitalWrite(CON_DATA, 1);
 }
 
 void latchLowAddress(){
-  PORTC = (PORTC & 0x03) | B001000;
-  PORTC = (PORTC & 0x03) | B101000;
-  PORTC = (PORTC & 0x03) | B001000;
+  digitalWrite(CON_A, 0);
+  digitalWrite(CON_B, 1);
+  digitalWrite(CON_C, 0);
+  digitalWrite(CON_DATA, 0);
+  digitalWrite(CON_DATA, 1);
 }
 
 void latchHighAddress(){
-  PORTC = (PORTC & 0x03) | B001100;
-  PORTC = (PORTC & 0x03) | B101100;
-  PORTC = (PORTC & 0x03) | B001100;
+  digitalWrite(CON_A, 1);
+  digitalWrite(CON_B, 1);
+  digitalWrite(CON_C, 0);
+  digitalWrite(CON_DATA, 0);
+  digitalWrite(CON_DATA, 1);
 }
 
 void handover(){
-  PORTC = (PORTC & 0x03) | B010100;
+  digitalWrite(CON_A, 1);
+  digitalWrite(CON_B, 0);
+  digitalWrite(CON_C, 1);
+  digitalWrite(CON_DATA, 0);
 }
 
 void enableRAM(){
-  PORTC = (PORTC & 0x03) | B000000;
-  PORTC = (PORTC & 0x03) | B100000;
-  PORTC = (PORTC & 0x03) | B000000;
-  PORTC = (PORTC & 0x03) | B100000;
+  digitalWrite(CON_A, 0);
+  digitalWrite(CON_B, 0);
+  digitalWrite(CON_C, 0);
+  digitalWrite(CON_DATA, 1);
+  digitalWrite(CON_DATA, 0);
+  digitalWrite(CON_DATA, 1);
 }
 
 void assertWrite(){
-  PORTC = (PORTC & 0x111111) | B000011;
-  PORTC = (PORTC & 0x111110) | B000010;
+  digitalWrite(nWRITE, 0);
 }
-
+void assertReset(){
+  digitalWrite(CON_A, 1); 
+  digitalWrite(CON_B, 0);
+  digitalWrite(CON_C, 0);
+  digitalWrite(CON_DATA, 1);
+  digitalWrite(CON_DATA, 0);
+  digitalWrite(CON_DATA, 1);
+}
 File readFileFromSDCard(char* fileName) {
   return SD.open("/BINARY.ROM");
 }
