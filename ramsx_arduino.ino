@@ -11,7 +11,7 @@ void setup() {
   initializeSDCard(10);
   setupPinsForWrite();
 
-  File romFile = readFileFromSDCard("/TANK.ROM");
+  File romFile = readFileFromSDCard("/TEST_2.ROM");
   romFile.seek(3);
 
   unsigned int offset = 0;
@@ -26,10 +26,13 @@ void setup() {
   if(romFile.size()>=32000){
     chipSelect = "CS12";
   }
+
   Serial.print("\nStarting ROM Read with Offset ");Serial.print(offset, HEX);
   long int startTime = millis(); 
   unsigned int address = 0;
+  assertReset();
   assertWrite();
+  romFile.seek(0);
   while(romFile.available()){
     unsigned int offsetAddress = address + offset;
     byte lowAddress = offsetAddress & 0xFF;
@@ -115,7 +118,7 @@ void selectRAM(){
 }
 
 void deselectRAM(){
-  PORTC = (PORTC & 0x03) | B00000;
+  PORTC = (PORTC & 0x03) | B000000;
   PORTC = (PORTC & 0x03) | B100000;
 }
 
@@ -130,5 +133,5 @@ void assertReset(){
 }
 
 File readFileFromSDCard(char* fileName) {
-  return SD.open("/BINARY.ROM");
+  return SD.open(fileName);
 }
