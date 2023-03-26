@@ -11,14 +11,27 @@ void setup() {
   initializeSDCard(10);
   setupPinsForWrite();
 
-  File romFile = readFileFromSDCard("/TANKBA~1.ROM");
+  File romFile = readFileFromSDCard("/TANK.ROM");
+  romFile.seek(3);
 
-  Serial.println("Starting ROM Read");
+  unsigned int offset = 0;
+  char* chipSelect = "CS1";
+  if(romFile.peek() >= 0x80){
+    offset = 0x8000;
+    chipSelect = "CS2";
+  } else if (romFile.peek() >= 0x40 && romFile.peek()<0x80){
+    offset = 0x4000;
+  }
+
+  if(romFile.size()>=32000){
+    chipSelect = "CS12";
+  }
+  Serial.print("\nStarting ROM Read with Offset ");Serial.print(offset, HEX);
   long int startTime = millis(); 
   unsigned int address = 0;
   assertWrite();
   while(romFile.available()){
-    unsigned int offsetAddress = address + 0x4000;
+    unsigned int offsetAddress = address + offset;
     byte lowAddress = offsetAddress & 0xFF;
     byte highAddress = (offsetAddress >> 8) & 0xFF;
     byte data = romFile.read();
@@ -28,13 +41,14 @@ void setup() {
     latchHighAddress();
     setDataPinValue(data);
     latchData();
-    enableRAM();
+    selectRAM();
+    deselectRAM();
     address ++;
   }
   long int completeTime = millis();
 
   Serial.print("\nCompleted ROM Read in "); Serial.print(completeTime-startTime); Serial.print(" ms");
-  Serial.println("\nHanding over to MSX");
+  Serial.print("\nHanding over to MSX, use signal "); Serial.print(chipSelect);
   handover();
   while(true)
     ;
@@ -46,7 +60,7 @@ void loop() {
 }
 
 void setupPinsForWrite(){
-  DDRD = B11111100;
+  DDRD = DDRD | B11111100;
   DDRB = DDRB | B00000011;
   DDRC = DDRC | B111111;
   Serial.println("\nSetting Port D2-7, B0-1, C0-5 as Outputs");
@@ -73,37 +87,46 @@ void initializeSDCard(int pin) {
   }
 }
 void latchData(){
-  PORTC = (PORTC & 0x03) | B010000;
   PORTC = (PORTC & 0x03) | B110000;
   PORTC = (PORTC & 0x03) | B010000;
+  PORTC = (PORTC & 0x03) | B110000;
 }
 
 void latchLowAddress(){
-  PORTC = (PORTC & 0x03) | B001000;
   PORTC = (PORTC & 0x03) | B101000;
   PORTC = (PORTC & 0x03) | B001000;
+  PORTC = (PORTC & 0x03) | B101000;
 }
 
 void latchHighAddress(){
-  PORTC = (PORTC & 0x03) | B001100;
   PORTC = (PORTC & 0x03) | B101100;
   PORTC = (PORTC & 0x03) | B001100;
+  PORTC = (PORTC & 0x03) | B101100;
 }
 
 void handover(){
-  PORTC = (PORTC & 0x03) | B010100;
+  PORTC = (PORTC & 0x00) | B110111;
+  PORTC = (PORTC & 0x00) | B010111;
 }
 
-void enableRAM(){
-  PORTC = (PORTC & 0x03) | B000000;
+void selectRAM(){
   PORTC = (PORTC & 0x03) | B100000;
   PORTC = (PORTC & 0x03) | B000000;
+}
+
+void deselectRAM(){
+  PORTC = (PORTC & 0x03) | B00000;
   PORTC = (PORTC & 0x03) | B100000;
 }
 
 void assertWrite(){
-  PORTC = (PORTC & 0x111111) | B000011;
-  PORTC = (PORTC & 0x111110) | B000010;
+  PORTC = (PORTC & B000000) | B000010;
+}
+
+void assertReset(){
+  PORTC = (PORTC & 0x03) | B100100;
+  PORTC = (PORTC & 0x03) | B000100;
+  PORTC = (PORTC & 0x03) | B100100;
 }
 
 File readFileFromSDCard(char* fileName) {
