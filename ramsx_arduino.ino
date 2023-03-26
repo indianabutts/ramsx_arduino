@@ -21,15 +21,31 @@ void setup() {
   initializeSDCard(10);
   setupPinsForWrite();
 
-  File romFile = readFileFromSDCard("/TANKBA~1.ROM");
+  File romFile = readFileFromSDCard("/KNIGHT.ROM");
 
-  Serial.println("Starting ROM Read");
+  romFile.seek(3);
+
+  unsigned int offset = 0;
+  char* chipSelect = "CS1";
+  if(romFile.peek() >= 0x80){
+    offset = 0x8000;
+    chipSelect = "CS2";
+  } else if (romFile.peek() >= 0x40 && romFile.peek()<0x80){
+    offset = 0x4000;
+  }
+
+  if(romFile.size()>=32000){
+    chipSelect = "CS12";
+  }
+
+  Serial.print("\nStarting ROM Read with Offset ");Serial.print(offset, HEX);
   long int startTime = millis(); 
   unsigned int address = 0;
   assertReset();
   assertWrite();
+  romFile.seek(0);
   while(romFile.available()){
-    unsigned int offsetAddress = address + 0x4000;
+    unsigned int offsetAddress = address + offset;
     byte lowAddress = offsetAddress & 0xFF;
     byte highAddress = (offsetAddress >> 8) & 0xFF;
     byte data = romFile.read();
@@ -39,13 +55,14 @@ void setup() {
     latchHighAddress();
     setDataPinValue(data);
     latchData();
-    enableRAM();
+    selectRAM();
+    deselectRAM();
     address ++;
   }
   long int completeTime = millis();
 
   Serial.print("\nCompleted ROM Read in "); Serial.print(completeTime-startTime); Serial.print(" ms");
-  Serial.println("\nHanding over to MSX");
+  Serial.print("\nHanding over to MSX, use signal "); Serial.print(chipSelect);
   handover();
   while(true)
     ;
@@ -92,6 +109,7 @@ void initializeSDCard(int pin) {
   }
 }
 void latchData(){
+  digitalWrite(CON_DATA, 1);  
   digitalWrite(CON_A, 0);
   digitalWrite(CON_B, 0);
   digitalWrite(CON_C, 1);
@@ -100,6 +118,7 @@ void latchData(){
 }
 
 void latchLowAddress(){
+  digitalWrite(CON_DATA, 1);
   digitalWrite(CON_A, 0);
   digitalWrite(CON_B, 1);
   digitalWrite(CON_C, 0);
@@ -108,6 +127,7 @@ void latchLowAddress(){
 }
 
 void latchHighAddress(){
+  digitalWrite(CON_DATA, 1);  
   digitalWrite(CON_A, 1);
   digitalWrite(CON_B, 1);
   digitalWrite(CON_C, 0);
@@ -116,23 +136,34 @@ void latchHighAddress(){
 }
 
 void handover(){
+  digitalWrite(nREAD, 1);
+  digitalWrite(nWRITE, 1);
+  digitalWrite(CON_DATA, 1);
   digitalWrite(CON_A, 1);
   digitalWrite(CON_B, 0);
   digitalWrite(CON_C, 1);
   digitalWrite(CON_DATA, 0);
 }
 
-void enableRAM(){
+void selectRAM(){
+  digitalWrite(CON_DATA, 1);
   digitalWrite(CON_A, 0);
   digitalWrite(CON_B, 0);
   digitalWrite(CON_C, 0);
-  digitalWrite(CON_DATA, 1);
   digitalWrite(CON_DATA, 0);
+}
+
+void deselectRAM(){
+  digitalWrite(CON_DATA, 0);
+  digitalWrite(CON_A, 0);
+  digitalWrite(CON_B, 0);
+  digitalWrite(CON_C, 0);
   digitalWrite(CON_DATA, 1);
 }
 
 void assertWrite(){
   digitalWrite(nWRITE, 0);
+  digitalWrite(nREAD, 1);
 }
 void assertReset(){
   digitalWrite(CON_A, 1); 
@@ -143,5 +174,5 @@ void assertReset(){
   digitalWrite(CON_DATA, 1);
 }
 File readFileFromSDCard(char* fileName) {
-  return SD.open("/BINARY.ROM");
+  return SD.open(fileName);
 }
