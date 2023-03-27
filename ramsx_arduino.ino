@@ -28,9 +28,6 @@ void setup() {
 
   if(romFile.size()>=32000){
     chipSelect = "CS12";
-    if(offset == 0x8000){
-      needToSwap = true;
-    }
   }
 
   Serial.print("\nStarting ROM Read with Offset ");Serial.print(offset, HEX);Serial.print(" and size "); Serial.print(romSize); Serial.print("kb");
@@ -38,12 +35,7 @@ void setup() {
   unsigned int address = 0;
   assertReset();
   assertWrite();
-  if(!needToSwap){
-    romFile.seek(0);
-  } else {
-    romFile.seek(romSize/2);
-  }
-  
+
   while(address<romSize){
     unsigned int offsetAddress = address + offset;
     byte lowAddress = offsetAddress & 0xFF;
