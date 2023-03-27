@@ -11,11 +11,14 @@ void setup() {
   initializeSDCard(10);
   setupPinsForWrite();
 
-  File romFile = readFileFromSDCard("/TEST_2.ROM");
+  File romFile = readFileFromSDCard("/TANK.ROM");
+  uint32_t romSize = romFile.size();
+
   romFile.seek(3);
 
   unsigned int offset = 0;
   char* chipSelect = "CS1";
+  bool needToSwap = false;
   if(romFile.peek() >= 0x80){
     offset = 0x8000;
     chipSelect = "CS2";
@@ -25,15 +28,23 @@ void setup() {
 
   if(romFile.size()>=32000){
     chipSelect = "CS12";
+    if(offset == 0x8000){
+      needToSwap = true;
+    }
   }
 
-  Serial.print("\nStarting ROM Read with Offset ");Serial.print(offset, HEX);
+  Serial.print("\nStarting ROM Read with Offset ");Serial.print(offset, HEX);Serial.print(" and size "); Serial.print(romSize); Serial.print("kb");
   long int startTime = millis(); 
   unsigned int address = 0;
   assertReset();
   assertWrite();
-  romFile.seek(0);
-  while(romFile.available()){
+  if(!needToSwap){
+    romFile.seek(0);
+  } else {
+    romFile.seek(romSize/2);
+  }
+  
+  while(address<romSize){
     unsigned int offsetAddress = address + offset;
     byte lowAddress = offsetAddress & 0xFF;
     byte highAddress = (offsetAddress >> 8) & 0xFF;
@@ -49,7 +60,6 @@ void setup() {
     address ++;
   }
   long int completeTime = millis();
-
   Serial.print("\nCompleted ROM Read in "); Serial.print(completeTime-startTime); Serial.print(" ms");
   Serial.print("\nHanding over to MSX, use signal "); Serial.print(chipSelect);
   handover();
@@ -90,35 +100,29 @@ void initializeSDCard(int pin) {
   }
 }
 void latchData(){
-  PORTC = (PORTC & 0x03) | B110000;
   PORTC = (PORTC & 0x03) | B010000;
   PORTC = (PORTC & 0x03) | B110000;
 }
 
 void latchLowAddress(){
-  PORTC = (PORTC & 0x03) | B101000;
   PORTC = (PORTC & 0x03) | B001000;
   PORTC = (PORTC & 0x03) | B101000;
 }
 
 void latchHighAddress(){
-  PORTC = (PORTC & 0x03) | B101100;
   PORTC = (PORTC & 0x03) | B001100;
   PORTC = (PORTC & 0x03) | B101100;
 }
 
 void handover(){
-  PORTC = (PORTC & 0x00) | B110111;
   PORTC = (PORTC & 0x00) | B010111;
 }
 
 void selectRAM(){
-  PORTC = (PORTC & 0x03) | B100000;
   PORTC = (PORTC & 0x03) | B000000;
 }
 
 void deselectRAM(){
-  PORTC = (PORTC & 0x03) | B000000;
   PORTC = (PORTC & 0x03) | B100000;
 }
 
@@ -127,7 +131,6 @@ void assertWrite(){
 }
 
 void assertReset(){
-  PORTC = (PORTC & 0x03) | B100100;
   PORTC = (PORTC & 0x03) | B000100;
   PORTC = (PORTC & 0x03) | B100100;
 }
