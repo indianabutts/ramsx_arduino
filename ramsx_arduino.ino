@@ -49,7 +49,8 @@ void setup() {
   }
   writeFileToSRAM(romFile);
   // displayDirectoryContent(sd, root, 0);
-  while(true);
+  handover();
+  while (true);
 
 
 }
@@ -69,7 +70,13 @@ void setupPinsForWrite() {
   DDRD = DDRD | B11111100;
   DDRB = DDRB | B00000011;
   DDRC = DDRC | B111111;
-  Serial.println("\nSetting Port D2-7, B0-1, C0-5 as Outputs");
+  // Serial.println("\nSetting Port D2-7, B0-1, C0-5 as Outputs");
+}
+void setupPinsForRead() {
+  DDRD = DDRD & B00000011;
+  DDRB = DDRB & B11111100;
+  DDRC = DDRC | B111111;
+  // Serial.println("\nSetting Port D2-7, B0-1 as Input, C0-5 as Outputs");
 }
 void setDataPinValue(byte data) {
   // Serial.println(data);
@@ -97,6 +104,10 @@ int writeFileToSRAM(const file_t &romFile){
 
   if (romSize >= 32000) {
     chipSelect = "CS12";
+  }
+
+  if(romSize >=64000){
+    offset = 0;
   }
   setupPinsForWrite();
   Serial.print("\nStarting ROM Read with Offset ");
@@ -128,11 +139,9 @@ int writeFileToSRAM(const file_t &romFile){
   Serial.print("\nCompleted ROM Read in ");
   Serial.print(completeTime - startTime);
   Serial.print(" ms");
-  Serial.print("\nHanding over to MSX, use signal ");
-  Serial.print(chipSelect);
-  handover();
-  while (true)
-    ;
+  Serial.print("\nHanding over to MSX, use signal ");Serial.print(chipSelect);Serial.print("\n");
+
+
 }
 
 void displayDirectoryContent(sd_t sd, file_t& aDirectory, byte tabulation) {
@@ -210,13 +219,44 @@ void deselectRAM() {
 }
 
 void assertWrite() {
-  PORTC = (PORTC & B000000) | B000010;
+  PORTC = (PORTC & B111100) | B000010;
 }
+
+void assertRead() {
+  PORTC = (PORTC & B111100) | B000001;
+}
+
+uint8_t readData(){
+  byte data = (PIND & B11111100)>>2;
+  return data | (((PINB & B00000011))<<6);
+}
+
 
 void assertReset() {
   PORTC = (PORTC & 0x03) | B000100;
   PORTC = (PORTC & 0x03) | B100100;
 }
+
+uint8_t readDataFromAddress(uint16_t address){
+  deselectRAM();
+  deassertReadandWrite();
+  setupPinsForWrite();
+  byte lowReadAddress = address & 0xFF;
+  byte highReadAddress = (address >> 8) & 0xFF;
+  setDataPinValue(lowReadAddress);
+  latchLowAddress();
+  setDataPinValue(highReadAddress);
+  latchHighAddress();
+  assertRead();
+  selectRAM();
+  setupPinsForRead();
+  return readData();
+}
+
+void deassertReadandWrite(){
+  PORTC = (PORTC & B111100) | B000011;
+}
+
 
 // File readFileFromSDCard(char* fileName) {
 //   return SD.open(fileName);
