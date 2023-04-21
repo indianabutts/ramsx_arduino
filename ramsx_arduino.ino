@@ -26,12 +26,25 @@ typedef FsFile file_t;
 #endif  // SD_FAT_TYPE
 
 
+void testRead(){
+   for(int i=0;i<30;i++){
+    byte data = readDataFromAddress(0x4000+i);
+    Serial.print(data,HEX);
+  }
+  // handover();
+  while(true);
+  
+}
 
 void setup() {
   Serial.begin(115200);
   Serial.print("\n******* Starting New Run *******\n");
-  while (!Serial)
-    ;
+  assertReset();
+  
+  // testRead();
+  
+  // while (!Serial)
+  //   ;
 
   sd_t sd = initializeSDCard(10);
   sd.setDedicatedSpi(true);
@@ -43,15 +56,17 @@ void setup() {
     Serial.print("\nERROR: Error Opening Dir");
     sd.errorHalt(&Serial);
   }
-  if(!romFile.open(&root, "Tank Battalion (1984)(Namcot)(JP).rom", O_READ)){
+  // char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
+  // char* filename = "testrom_write.rom";
+  if(!romFile.open(&root, "Pac-Man (1984)(Namcot)(JP).rom", O_READ)){
     Serial.print("\nERROR: Error Opening File");
     sd.errorHalt(&Serial);
   }
   writeFileToSRAM(romFile);
   // displayDirectoryContent(sd, root, 0);
+ 
   handover();
   while (true);
-
 
 }
 
@@ -233,6 +248,7 @@ uint8_t readData(){
 
 
 void assertReset() {
+  PORTC = (PORTC & 0x03) | B100100;
   PORTC = (PORTC & 0x03) | B000100;
   PORTC = (PORTC & 0x03) | B100100;
 }
