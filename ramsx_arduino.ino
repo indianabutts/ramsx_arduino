@@ -8,23 +8,22 @@
 
 #include "constants.h"
 #include "sd_utilities.h"
-
+#include "core.h"
 
 char* testName = "YASSIR ALREFAIE.     ";
-
 uint8_t controlStatus = 0;
 
 void setup() {
 
   
   setupControlPins();
-  haltMSX();
+  core_haltMSX();
   Serial.begin(115200);
   Serial.print("\n******* Starting New Run *******\n");
   
   setupDataPinsForWrite();
   
-  setControlForBootloaderWrite();
+  controlStatus = core_setControlForBootloaderWrite(controlStatus);
 
   
   sd_t sd = sd_initializeSDCard(10);
@@ -48,7 +47,7 @@ void setup() {
   }
   writeFileToSRAM(romFile); 
   handover();
-  releaseMSX();
+  core_releaseMSX();
   clearReadOrWrite();
   while (true);
 
@@ -57,48 +56,23 @@ void setup() {
 void loop() {
 }
 
+// void haltMSX(){
+//   PORTC &= B101111;
+// }
 
-void latchControl(){
-  PORTC |= B001000;
-  PORTC &= B110111;
-}
+// void releaseMSX(){
+//   PORTC |= B010000;
+// }
 
-void latchLowAddress() {
-  PORTC |= B000001 ;
-  PORTC &= B111110 ;
-}
+// void deassertAddress16(){
+//   Serial.println("\n Deasserting A16");
+//   controlStatus = core_clearControlBit(CONTROL_A16, controlStatus);
+// }
 
-void latchHighAddress() {
-  PORTC |= B000010;
-  PORTC &= B111101;
-}
-
-void setControlForBootloaderWrite(){
-  Serial.println("Setting up for Bootloader Write");
-  clearControlBit(CONTROL_A16);
-  clearControlBit(CONTROL_nWRITE);
-  clearControlBit(CONTROL_COMM_RESET);
-  setControlBit(CONTROL_nREAD);
-  setControlBit(CONTROL_HANDOVER);
-}
-
-void haltMSX(){
-  PORTC &= B101111;
-}
-
-void releaseMSX(){
-  PORTC |= B010000;
-}
-
-void deassertAddress16(){
-  Serial.println("\n Deasserting A16");
-  clearControlBit(CONTROL_A16);
-}
-
-void assertAddress16(){
-  Serial.println("\n Asserting A16");
-  setControlBit(CONTROL_A16);
-}
+// void assertAddress16(){
+//   Serial.println("\n Asserting A16");
+//   controlStatus = core_setControlBit(CONTROL_A16, controlStatus);
+// }
 
 
 void setupControlPins(){
@@ -113,31 +87,28 @@ void setupDataPinsForRead() {
   DDRD = DDRD & B00000011;
   DDRB = DDRB & B11111100;
 }
-void setDataPinsValue(byte data) {
-  PORTD = (((data << 2) & 0xFC)) | PORTD & 0x3;
-  PORTB = (data >> 6) & 0x3 | PORTB & 0xFC;
-}
 
-void setControlBit(uint8_t controlPin){
-  // Serial.print("Setting Control Bit "); Serial.print(controlPin);Serial.print("\r\n");
-  // Serial.print("Previous Control: B"); Serial.print(controlStatus, BIN);Serial.print("\r\n");
-  controlStatus |= (1<<controlPin);
-  setDataPinsValue(controlStatus);
-  latchControl();
-  // Serial.print("New Control: B"); Serial.print(controlStatus, BIN);Serial.print("\r\n");
-}
-void clearControlBit(uint8_t controlPin){
-  // Serial.print("Clearing Control Bit "); Serial.print(controlPin);Serial.print("\r\n");
-  // Serial.print("Previous Control: B"); Serial.print(controlStatus, BIN);Serial.print("\r\n");
-  controlStatus &= ~(1UL<<controlPin);
-  setDataPinsValue(controlStatus);
-  latchControl();
-  // Serial.print("New Control: B"); Serial.print(controlStatus, BIN);Serial.print("\r\n");
-}
+
+// void core_setControlBit(uint8_t controlPin){
+//   // Serial.print("Setting Control Bit "); Serial.print(controlPin);Serial.print("\r\n");
+//   // Serial.print("Previous Control: B"); Serial.print(controlStatus, BIN);Serial.print("\r\n");
+//   controlStatus |= (1<<controlPin);
+//   setDataPinsValue(controlStatus);
+//   core_latchControl();
+//   // Serial.print("New Control: B"); Serial.print(controlStatus, BIN);Serial.print("\r\n");
+// }
+// void core_clearControlBit(uint8_t controlPin){
+//   // Serial.print("Clearing Control Bit "); Serial.print(controlPin);Serial.print("\r\n");
+//   // Serial.print("Previous Control: B"); Serial.print(controlStatus, BIN);Serial.print("\r\n");
+//   controlStatus &= ~(1UL<<controlPin);
+//   setDataPinsValue(controlStatus);
+//   core_latchControl();
+//   // Serial.print("New Control: B"); Serial.print(controlStatus, BIN);Serial.print("\r\n");
+// }
 
 void handover() {
   Serial.println("\nHanding Over");
-  clearControlBit(CONTROL_HANDOVER);
+  controlStatus = core_clearControlBit(CONTROL_HANDOVER, controlStatus);
 }
 
 void selectRAM() {
@@ -150,14 +121,14 @@ void deselectRAM() {
 
 void assertWrite() {
   Serial.println("\nAsserting Write");
-  setControlBit(CONTROL_nREAD);
-  clearControlBit(CONTROL_nWRITE);
+  controlStatus = core_setControlBit(CONTROL_nREAD, controlStatus);
+  controlStatus = core_clearControlBit(CONTROL_nWRITE, controlStatus);
 }
 
 void assertRead() {
   Serial.println("\nAsserting Read");
-  clearControlBit(CONTROL_nREAD);
-  setControlBit(CONTROL_nWRITE);
+  controlStatus = core_clearControlBit(CONTROL_nREAD, controlStatus);
+  controlStatus = core_setControlBit(CONTROL_nWRITE, controlStatus);
 }
 
 uint8_t readData(){
@@ -167,8 +138,8 @@ uint8_t readData(){
 
 void clearReadOrWrite(){
   Serial.println("\nClearing Read and Write");
-  setControlBit(CONTROL_nREAD);
-  setControlBit(CONTROL_nWRITE);
+  controlStatus = core_setControlBit(CONTROL_nREAD, controlStatus);
+  controlStatus = core_setControlBit(CONTROL_nWRITE, controlStatus);
 }
 
 
@@ -178,10 +149,10 @@ uint8_t readDataFromAddress(uint16_t address){
   setupDataPinsForWrite();
   byte lowReadAddress = address & 0xFF;
   byte highReadAddress = (address >> 8) & 0xFF;
-  setDataPinsValue(lowReadAddress);
-  latchLowAddress();
-  setDataPinsValue(highReadAddress);
-  latchHighAddress();
+  core_setDataPinsValue(lowReadAddress);
+  core_latchLowAddress();
+  core_setDataPinsValue(highReadAddress);
+  core_latchHighAddress();
   assertRead();
   selectRAM();
   setupDataPinsForRead();
@@ -190,14 +161,14 @@ uint8_t readDataFromAddress(uint16_t address){
 
 void setChipSelect(uint8_t cs){
   if(cs == 0 ){
-    clearControlBit(CONTROL_SEL_A);
-    clearControlBit(CONTROL_SEL_B);
+    controlStatus = core_clearControlBit(CONTROL_SEL_A, controlStatus);
+    controlStatus = core_clearControlBit(CONTROL_SEL_B, controlStatus);
   }
   if(cs & 1 == 1){
-    setControlBit(CONTROL_SEL_A);
+    controlStatus = core_setControlBit(CONTROL_SEL_A, controlStatus);
   }
   if(cs & 2 == 2 ){
-    setControlBit(CONTROL_SEL_B);
+    controlStatus = core_setControlBit(CONTROL_SEL_B, controlStatus);
   }
 }
 
@@ -243,11 +214,11 @@ int writeFileToSRAM(const file_t &romFile){
     byte lowAddress = offsetAddress & 0xFF;
     byte highAddress = (offsetAddress >> 8) & 0xFF;
     byte data = romFile.read();
-    setDataPinsValue(lowAddress);
-    latchLowAddress();
-    setDataPinsValue(highAddress);
-    latchHighAddress();
-    setDataPinsValue(data);
+    core_setDataPinsValue(lowAddress);
+    core_latchLowAddress();
+    core_setDataPinsValue(highAddress);
+    core_latchHighAddress();
+    core_setDataPinsValue(data);
     selectRAM();
     deselectRAM();
     address++;

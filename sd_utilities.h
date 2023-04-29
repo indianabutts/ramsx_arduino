@@ -3,6 +3,8 @@
 #include <SdFat.h>
 
 #define SD_FAT_TYPE 2
+#define SD_INDEX_FILE_NAME "._index"
+#define SD_DEFAULT_FILE_NAME_SIZE 20
 
 #if SD_FAT_TYPE == 0
 typedef SdFat sd_t;
@@ -19,6 +21,11 @@ typedef FsFile file_t;
 #else  // SD_FAT_TYPE
 #error Invalid SD_FAT_TYPE
 #endif  // SD_FAT_TYPE
+
+typedef struct RomFile{
+  unsigned int fileSize;
+  char* fileName;
+} SD_RomFile;
 
 sd_t sd_initializeSDCard(int pin);
 void sd_createIndexFile(sd_t sd, file_t& directory, char* filename);
