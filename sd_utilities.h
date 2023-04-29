@@ -1,7 +1,6 @@
 #ifndef SD_UTILITIES_H
 #define SD_UTILITIES_H
 #include <SdFat.h>
-
 #define SD_FAT_TYPE 2
 #define SD_INDEX_FILE_NAME "._index"
 #define SD_DEFAULT_FILE_NAME_SIZE 20
@@ -24,12 +23,15 @@ typedef FsFile file_t;
 
 typedef struct RomFile{
   unsigned int fileSize;
+  uint16_t offset;
   char* fileName;
+  file_t* file;
 } SD_RomFile;
 
 sd_t sd_initializeSDCard(int pin);
+
 void sd_createIndexFile(sd_t sd, file_t& directory, char* filename);
 void sd_getNFilesFromOffset(sd_t sd, file_t& directory, uint8_t fileCount, uint16_t pageNumber);
 void sd_displayDirectoryContent(sd_t sd, file_t& aDirectory, byte tabulation);
-
+SD_RomFile sd_getFileInfo(file_t &file);
 #endif

@@ -3,18 +3,17 @@
 
 #include <sdios.h>
 #include "constants.h"
+#include "control.h"
+#include "sd_utilities.h"
 
-void core_latchHighAddress();
-void core_latchLowAddress();
-void core_latchControl();
-uint8_t core_setControlForBootloaderWrite(uint8_t controlStatus);
-uint8_t core_setControlBit(uint8_t controlPin, uint8_t controlStatus);
-uint8_t core_clearControlBit(uint8_t controlPin, uint8_t controlStatus);
 void core_setDataPinsValue(byte data);
-void core_haltMSX();
-void core_releaseMSX();
-uint8_t core_deassertAddress16(uint8_t controlStatus);
-uint8_t core_assertAddress16(uint8_t controlStatus);
+void core_initializeControlPins();
+void core_initializeDataPinsForWrite();
+void core_initializeDataPinsForRead();
+uint8_t core_readDataPinsValue();
+void core_writeDataToAddress(uint16_t address, uint8_t data);
+uint8_t core_readDataFromAddress(uint16_t address);
 
+uint8_t core_writeFileToSRAM(const file_t &romFile, uint8_t controlStatus);
 
 #endif

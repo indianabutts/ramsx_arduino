@@ -26,11 +26,24 @@ void sd_getNFilesFromOffset(sd_t sd, file_t& directory, uint8_t fileCount, uint1
     return;
   }
   directory.rewindDirectory();
+
+  //TODO: Need to find a better way to achieve this, for now, I only know this way of seeking to the correct offset....
   for(unsigned int i=0; i< fileCount*pageNumber; i++){
     file.openNext(&directory, O_READ);
     file.close();
   }
+  for(unsigned int i=0; i<fileCount;i++){
+    file.openNext(&directory);
+  }
 }
+
+// SD_RomFile sd_getFileInfo(file_t& file){
+//   SD_RomFile romFile;
+//   char fileName[255];
+//   romFile.fileName = file.getName(fileName, sizeof fileName);
+//   romFile.fileSize = file.fileSize();
+//   rom
+// }
 
 void sd_displayDirectoryContent(sd_t sd, file_t& aDirectory, byte tabulation) {
   file_t file;
@@ -64,3 +77,16 @@ void sd_displayDirectoryContent(sd_t sd, file_t& aDirectory, byte tabulation) {
   }
   Serial.print("\n ");Serial.print(counter);Serial.print(" total files in directory");
 }
+
+void sd_createIndexFile(sd_t sd, file_t& directory, char* filename){
+  // Started: 2023/04/29
+  // Will finish this later
+  // I want to have the file list stored in this file, so that we don't need to constantly
+  // iterate over the SD Card Hierarchy to get the file list.
+  // This will be the unsorted version, and then we will have a sorted file list, so that we can display
+  // the files sorted, which we wouldnt be able to do otherwise, since we do not have the RAM to store
+  // all the file names, especially assuming people have 100's of files.
+  // The sorting should only happen if there is a difference, but if this is impossible to do, we would just
+  // do it everytime the system is booted.
+}
+  
