@@ -1,0 +1,17 @@
+#ifndef RAMSX_CONSTANTS_H
+#define RAMSX_CONSTANTS_H
+
+// 1 for FAT16/FAT32, 2 for exFAT, 3 for FAT16/FAT32 and exFAT.
+
+
+#define CONTROL_A16 0
+#define CONTROL_nREAD 1
+#define CONTROL_nWRITE 2
+#define CONTROL_SEL_A 3
+#define CONTROL_SEL_B 4
+#define CONTROL_HANDOVER 5
+#define CONTROL_COMM_RESET 6
+
+
+
+#endif

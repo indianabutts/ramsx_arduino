@@ -6,38 +6,17 @@
 #include <SdFatConfig.h>
 #include <sdios.h>
 
-// 1 for FAT16/FAT32, 2 for exFAT, 3 for FAT16/FAT32 and exFAT.
-#define SD_FAT_TYPE 2
+#include "constants.h"
+#include "sd_utilities.h"
 
-#if SD_FAT_TYPE == 0
-typedef SdFat sd_t;
-typedef File file_t;
-#elif SD_FAT_TYPE == 1
-typedef SdFat32 sd_t;
-typedef File32 file_t;
-#elif SD_FAT_TYPE == 2
-typedef SdExFat sd_t;
-typedef ExFile file_t;
-#elif SD_FAT_TYPE == 3
-typedef SdFs sd_t;
-typedef FsFile file_t;
-#else  // SD_FAT_TYPE
-#error Invalid SD_FAT_TYPE
-#endif  // SD_FAT_TYPE
 
-#define CONTROL_A16 0
-#define CONTROL_nREAD 1
-#define CONTROL_nWRITE 2
-#define CONTROL_SEL_A 3
-#define CONTROL_SEL_B 4
-#define CONTROL_HANDOVER 5
-#define CONTROL_COMM_RESET 6
-
+char* testName = "YASSIR ALREFAIE.     ";
 
 uint8_t controlStatus = 0;
 
 void setup() {
 
+  
   setupControlPins();
   haltMSX();
   Serial.begin(115200);
@@ -48,7 +27,7 @@ void setup() {
   setControlForBootloaderWrite();
 
   
-  sd_t sd = initializeSDCard(10);
+  sd_t sd = sd_initializeSDCard(10);
   sd.setDedicatedSpi(true);
   
   
@@ -58,6 +37,9 @@ void setup() {
     Serial.print("\nERROR: Error Opening Dir");
     sd.errorHalt(&Serial);
   }
+
+  sd_displayDirectoryContent(sd, root, 0);
+  while(true);
   // char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
   // char* filename = "testrom_write.rom";
   if(!romFile.open(&root, "out.rom", O_READ)){
@@ -135,25 +117,6 @@ void setDataPinsValue(byte data) {
   PORTD = (((data << 2) & 0xFC)) | PORTD & 0x3;
   PORTB = (data >> 6) & 0x3 | PORTB & 0xFC;
 }
-
-
-sd_t initializeSDCard(int pin) {
-  Serial.print("Initializing SD card...\r\n");
-  sd_t sd;
-
-  if (!sd.begin(pin, SPI_FULL_SPEED)) {
-    Serial.println("initialization failed. Things to check:");
-    Serial.println("1. is a card inserted?");
-    Serial.println("2. is your wiring correct?");
-    Serial.println("3. did you change the chipSelect pin to match your shield or module?");
-    Serial.println("Note: press reset or reopen this serial monitor after fixing your issue!");
-    sd.initErrorHalt();
-  }
-  Serial.print("\nSD Card Initialized");
-  return sd;
-}
-
-
 
 void setControlBit(uint8_t controlPin){
   // Serial.print("Setting Control Bit "); Serial.print(controlPin);Serial.print("\r\n");
@@ -297,34 +260,19 @@ int writeFileToSRAM(const file_t &romFile){
 }
 
 
-void displayDirectoryContent(sd_t sd, file_t& aDirectory, byte tabulation) {
-  file_t file;
-  char fileName[255];
-
-  if (!aDirectory.isDir()) return;
-  aDirectory.rewind();
-  unsigned int counter = 0;
-  file.getName(fileName, sizeof(fileName));
-  Serial.print("\n\n Listing for DIR: "); Serial.print(fileName);Serial.print("\n=================================================\n");
-  Serial.print("File Name                    \t Size \t Start Address\n");
-  Serial.print("=================================================\n");
-  while (file.openNext(&aDirectory, O_READ)) {
-    if (!file.isHidden()) {
-      file.getName(fileName, sizeof(fileName));
-      fileName[30] = '\0';
-      for (uint8_t i = 0; i < tabulation; i++) Serial.write('\t');
-      if (file.isDir()) {
-        Serial.println(F("/"));Serial.print(fileName);
-      } else {
-        file.seek(3);
-        byte msb = file.peek();
-        file.seek(2);
-        byte lsb = file.peek();
-        Serial.print(fileName);Serial.write('\t'); Serial.print((uint32_t) file.fileSize()/1000); Serial.print(" kb \t"); Serial.print("0x");Serial.print(msb,HEX),Serial.print(lsb,HEX);Serial.print("\n");
-      }
-    }
-    counter ++;
-    file.close();
-  }
-  Serial.print("\n ");Serial.print(counter);Serial.print(" total files in directory");
+void createUnsortedFileListFile(sd_t sd, file_t& directory, char* filename){
+  // Started: 2023/04/29
+  // Will finish this later
+  // I want to have the file list stored in this file, so that we don't need to constantly
+  // iterate over the SD Card Hierarchy to get the file list.
+  // This will be the unsorted version, and then we will have a sorted file list, so that we can display
+  // the files sorted, which we wouldnt be able to do otherwise, since we do not have the RAM to store
+  // all the file names, especially assuming people have 100's of files.
+  // The sorting should only happen if there is a difference, but if this is impossible to do, we would just
+  // do it everytime the system is booted.
+  file_t indexFile;
+  indexFile.open(filename, O_WRITE);
+  indexFile.close();
 }
+
+
