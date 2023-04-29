@@ -38,15 +38,18 @@ void setup() {
     sd.errorHalt(&Serial);
   }
 
-  sd_displayDirectoryContent(sd, root, 0);
-  while(true);
+  // sd_displayDirectoryContent(sd, root, 0);
+  // while(true);
   // char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
   // char* filename = "testrom_write.rom";
-  if(!romFile.open(&root, "Tank Battalion (1984)(Namcot)(JP).rom", O_READ)){
+  if(!romFile.open(&root, "out.rom", O_READ)){
     Serial.print("\nERROR: Error Opening File");
     sd.errorHalt(&Serial);
   }
   controlStatus = core_writeFileToSRAM(romFile, controlStatus); 
+
+  seekToFileOffset(sd, root, 21, 0);
+   SD_RomFile testFile = 
   controlStatus = control_handover(controlStatus);
   control_releaseMSX();
   controlStatus=control_clearReadAndWrite(controlStatus);

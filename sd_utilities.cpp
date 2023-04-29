@@ -13,19 +13,16 @@ sd_t sd_initializeSDCard(int pin) {
     Serial.println("Note: press reset or reopen this serial monitor after fixing your issue!");
     sd.initErrorHalt();
   }
-  Serial.print("\nSD Card Initialized");
+  // Serial.print("\nSD Card Initialized");
   return sd;
 }
-
-SD_RomFile* sd_getNFilesFromOffset(sd_t sd, file_t& directory, uint8_t fileCount, uint16_t pageNumber){
-  // A Page is fileCount in size, so assuming fileCount of 21, and page number 1, this would offset by 21
+void seekToFileOffset(sd_t sd, file_t& directory, uint8_t fileCount, uint16_t pageNumber){
   file_t file;
-  char fileName[255];
-  SD_RomFile files[fileCount];
   if(!directory.isDir()) {
     Serial.println("Not a valid Directory, exiting from function");
     return;
   }
+  
   directory.rewindDirectory();
 
   //TODO: Need to find a better way to achieve this, for now, I only know this way of seeking to the correct offset....
@@ -33,32 +30,33 @@ SD_RomFile* sd_getNFilesFromOffset(sd_t sd, file_t& directory, uint8_t fileCount
     file.openNext(&directory, O_READ);
     file.close();
   }
-  for(unsigned int i=0; i<fileCount;i++){
-    file.openNext(&directory, O_RDONLY);
-    SD_RomFile currentFile;
-    currentFile.file = &file;
-    file.openNext(&directory);
-    file.getName(fileName, sizeof(fileName));
-    // fileName[SD_DEFAULT_FILE_NAME_SIZE] = '\0';
-    strncpy(currentFile.fileName, fileName, SD_DEFAULT_FILE_NAME_SIZE);
-    file.seek(3);
-    uint8_t msb = file.peek();
-    file.seek(2);
-    uint8_t lsb = file.peek();
-    currentFile.offset = (msb<<8) | lsb;
-    currentFile.fileSize = file.fileSize();
-    files[i] = currentFile;
-  }
-  return files;
 }
 
-// SD_RomFile sd_getFileInfo(file_t& file){
-//   SD_RomFile romFile;
-//   char fileName[255];
-//   romFile.fileName = file.getName(fileName, sizeof fileName);
-//   romFile.fileSize = file.fileSize();
-//   rom
-// }
+SD_RomFile sd_getFileFromOffset(sd_t sd, file_t& directory){
+  // A Page is fileCount in size, so assuming fileCount of 21, and page number 1, this would offset by 21
+  file_t file;
+  char fileName[255];
+  SD_RomFile currentFile;
+  if(!directory.isDir()) {
+    Serial.println("Not a valid Directory, exiting from function");
+    return;
+  }  
+  
+    file.openNext(&directory, O_RDONLY);
+    file.getName(fileName, sizeof(fileName));
+    fileName[SD_DEFAULT_FILE_NAME_SIZE]='\0';
+    char truncatedString[SD_DEFAULT_FILE_NAME_SIZE];
+    strncpy(currentFile.fileName, fileName, SD_DEFAULT_FILE_NAME_SIZE);
+    
+    file.seek(3);
+    uint16_t msb = file.peek();
+    file.seek(2);
+    uint16_t lsb = file.peek();
+    currentFile.offset = (msb<<8) | lsb;
+    currentFile.fileSize = file.fileSize();
+    file.close();
+  return currentFile;
+}
 
 void sd_displayDirectoryContent(sd_t sd, file_t& aDirectory, byte tabulation) {
   file_t file;

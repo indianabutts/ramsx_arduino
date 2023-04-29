@@ -79,8 +79,13 @@ uint8_t core_writeFileToSRAM(const file_t &romFile, uint8_t controlStatus){
   Serial.print("\nStarting ROM Read with Offset ");
   Serial.print(offset, HEX);
   Serial.print(" and size ");
-  Serial.print(romSize);
-  Serial.print("kb");
+  if(romSize>1000){
+  Serial.print(romSize/1000);
+  Serial.print(" kbytes");
+  } else {
+    Serial.print(romSize);
+  Serial.print(" bytes");
+  }
   long int startTime = millis();
   unsigned int address = 0;
   
