@@ -42,19 +42,23 @@ SD_RomFile sd_getFileFromOffset(sd_t sd, file_t& directory){
     return;
   }  
   
-    file.openNext(&directory, O_RDONLY);
-    file.getName(fileName, sizeof(fileName));
-    fileName[SD_DEFAULT_FILE_NAME_SIZE]='\0';
-    char truncatedString[SD_DEFAULT_FILE_NAME_SIZE];
-    strncpy(currentFile.fileName, fileName, SD_DEFAULT_FILE_NAME_SIZE);
-    
-    file.seek(3);
-    uint16_t msb = file.peek();
-    file.seek(2);
-    uint16_t lsb = file.peek();
-    currentFile.offset = (msb<<8) | lsb;
-    currentFile.fileSize = file.fileSize();
-    file.close();
+  file.openNext(&directory, O_RDONLY);
+  file.getName(fileName, sizeof(fileName));
+  fileName[SD_DEFAULT_FILE_NAME_SIZE]='\0';
+  char truncatedString[SD_DEFAULT_FILE_NAME_SIZE];
+  strncpy(currentFile.fileName, fileName, SD_DEFAULT_FILE_NAME_SIZE);
+  
+  file.seek(3);
+  uint16_t msb = file.peek();
+  file.seek(2);
+  uint16_t lsb = file.peek();
+  currentFile.offset = (msb<<8) | lsb;
+  currentFile.fileSize = file.fileSize();
+  // char* testString = (char*)malloc(5*sizeof(char));
+  // sprintf(testString,"%3dkb", currentFile.fileSize/1000);
+  // sprintf(currentFile.formattedFileSize, "%3dkb", currentFile.fileSize/1000);
+  // Serial.println(testString);
+  file.close();
   return currentFile;
 }
 
