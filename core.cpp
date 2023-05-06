@@ -9,18 +9,35 @@ uint8_t core_readDataPinsValue(){
   return data | (((PINB & B00000011))<<6);
 }
 
-uint8_t core_readDataFromAddress(uint16_t address){
-  control_deselectRAM();
+uint8_t core_readDataFromAddress(uint8_t *data, uint8_t controlStatus, uint16_t address){
   core_initializeDataPinsForWrite();
+  controlStatus = control_deassertRead(controlStatus);
+  
+  __asm__("nop\n\t");
+  __asm__("nop\n\t"); 
+  __asm__("nop\n\t");
+  __asm__("nop\n\t"); 
+  __asm__("nop\n\t");
+  __asm__("nop\n\t"); 
   byte lowReadAddress = address & 0xFF;
   byte highReadAddress = (address >> 8) & 0xFF;
   core_setDataPinsValue(lowReadAddress);
   control_latchLowAddress();
   core_setDataPinsValue(highReadAddress);
   control_latchHighAddress();
-  control_selectRAM();
+  
+  controlStatus = control_assertRead(controlStatus);
   core_initializeDataPinsForRead();
-  return core_readDataPinsValue();
+  control_selectRAM();
+  __asm__("nop\n\t");
+  __asm__("nop\n\t"); 
+  __asm__("nop\n\t");
+  __asm__("nop\n\t"); 
+  __asm__("nop\n\t");
+  __asm__("nop\n\t");
+  (*data) = core_readDataPinsValue(); 
+  control_deselectRAM();
+  return controlStatus;
 }
 
 void core_writeDataToAddress(uint16_t address, uint8_t data){

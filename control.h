@@ -15,6 +15,7 @@ void control_haltMSX();
 void control_releaseMSX();
 uint8_t control_deassertAddress16(uint8_t controlStatus);
 uint8_t control_assertAddress16(uint8_t controlStatus);
+uint8_t control_deassertRead(uint8_t controlStatus);
 uint8_t control_assertWrite(uint8_t controlStatus);
 uint8_t control_assertRead(uint8_t controlStatus);
 void control_selectRAM();

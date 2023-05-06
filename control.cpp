@@ -24,19 +24,19 @@ void control_latchControl(){
 
 
 uint8_t control_deassertAddress16(uint8_t controlStatus){
-  Serial.println("\n Deasserting A16");
+  // Serial.println("\n Deasserting A16");
   controlStatus = control_clearControlBit(CONTROL_A16, controlStatus);
   return controlStatus;
 }
 
 uint8_t control_assertAddress16(uint8_t controlStatus){
-  Serial.println("\n Asserting A16");
+  // Serial.println("\n Asserting A16");
   controlStatus = control_setControlBit(CONTROL_A16, controlStatus);
   return controlStatus;
 }
 
 uint8_t control_setControlForBootloaderWrite(uint8_t controlStatus){
-  Serial.println("Setting up for Bootloader Write");
+  // Serial.println("Setting up for Bootloader Write");
   controlStatus = control_clearControlBit(CONTROL_A16, controlStatus);
   controlStatus = control_clearControlBit(CONTROL_nWRITE, controlStatus);
   controlStatus = control_clearControlBit(CONTROL_COMM_RESET, controlStatus);
@@ -59,14 +59,20 @@ uint8_t control_clearControlBit(uint8_t controlPin, uint8_t controlStatus){
 }
 
 uint8_t control_assertWrite(uint8_t controlStatus) {
-  Serial.println("\nAsserting Write");
+  // Serial.println("\nAsserting Write");
   controlStatus = control_setControlBit(CONTROL_nREAD, controlStatus);
   controlStatus = control_clearControlBit(CONTROL_nWRITE, controlStatus);
   return controlStatus;
 }
 
+uint8_t control_deassertRead(uint8_t controlStatus){
+  // Serial.println("\nDeasserting Read");
+  controlStatus = control_setControlBit(CONTROL_nREAD, controlStatus);
+  return controlStatus;
+}
+
 uint8_t control_assertRead(uint8_t controlStatus) {
-  Serial.println("\nAsserting Read");
+  // Serial.println("\nAsserting Read");
   controlStatus = control_clearControlBit(CONTROL_nREAD, controlStatus);
   controlStatus = control_setControlBit(CONTROL_nWRITE, controlStatus);
   return controlStatus;
@@ -81,7 +87,7 @@ void control_deselectRAM() {
 }
 
 uint8_t control_clearReadAndWrite(uint8_t controlStatus){
-  Serial.println("\nClearing Read and Write");
+  // Serial.println("\nClearing Read and Write");
   controlStatus = control_setControlBit(CONTROL_nREAD, controlStatus);
   controlStatus = control_setControlBit(CONTROL_nWRITE, controlStatus);
   return controlStatus;
