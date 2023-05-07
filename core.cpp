@@ -39,6 +39,9 @@ uint8_t core_readDataFromAddress(uint8_t *data, uint8_t controlStatus, uint16_t 
   control_deselectRAM();
   return controlStatus;
 }
+bool core_checkForCommandSignal(){
+  return ~(PINC && B100000);
+}
 
 void core_writeDataToAddress(uint16_t address, uint8_t data){
   byte lowAddress = address & 0xFF;

@@ -11,7 +11,6 @@
 #include "core.h"
 #include "control.h"
 
-char* testName = "YASSIR ALREFAIE.     ";
 uint8_t controlStatus = 0;
 
 void setup() {
@@ -39,7 +38,7 @@ void setup() {
   }
   // char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
   // char* filename = "testrom_write.rom";
-  if(!romFile.open(&root, "Tank Battalion (1984)(Namcot)(JP).rom", O_READ)){
+  if(!romFile.open(&root, "write.rom", O_READ)){
     Serial.print("\nERROR: Error Opening File");
     sd.errorHalt(&Serial);
   }
@@ -81,7 +80,13 @@ void setup() {
   controlStatus=control_clearReadAndWrite(controlStatus);
   control_releaseMSX();
   
-  while (true);
+  while (true){
+      if(core_checkForCommandSignal()){
+        controlStatus = control_assertWrite(controlStatus);
+        core_WriteDataToAddress(0x6FFE, 0x6F);
+        controlStatus = control_clearReadAndWrite(controlStatus);
+      } 
+  }
 }
 
 void loop() {

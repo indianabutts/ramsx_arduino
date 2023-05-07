@@ -13,7 +13,7 @@ void core_initializeDataPinsForRead();
 uint8_t core_readDataPinsValue();
 void core_writeDataToAddress(uint16_t address, uint8_t data);
 uint8_t core_readDataFromAddress(uint8_t *data, uint8_t controlStatus, uint16_t address);
-
+bool core_checkForCommandSignal();
 uint8_t core_writeFileToSRAM(const file_t &romFile, uint8_t controlStatus);
 
 #endif
