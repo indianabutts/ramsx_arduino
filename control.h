@@ -22,6 +22,7 @@ void control_selectRAM();
 void control_deselectRAM();
 uint8_t control_clearReadAndWrite(uint8_t controlStatus);
 uint8_t control_handover(uint8_t controlStatus);
+uint8_t control_takeover(uint8_t controlStatus);
 uint8_t control_setChipSelect(uint8_t cs, uint8_t controlStatus);
 
 #endif

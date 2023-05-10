@@ -42,7 +42,6 @@ void setup() {
     Serial.print("\nERROR: Error Opening File");
     sd.errorHalt(&Serial);
   }
-  controlStatus = control_assertAddress16(controlStatus);
   controlStatus = core_writeFileToSRAM(romFile, controlStatus); 
 
   // seekToFileOffset(sd, root, SD_DEFAULT_FILE_COUNT, 0);
@@ -62,17 +61,14 @@ void setup() {
   //   }
   // }
 
-  // TODO [FIX]: Read needs both the Data of the Arduino Pins, and 
-  // Serial.println("CONTROL BEFORE READ");
-  // Serial.println(controlStatus, BIN);
-  // uint8_t data = 0;
-  // for(int i =0; i< 25; i++){
-  //   uint16_t currentAddress = 0x4000 + i;
-  //   controlStatus = core_readDataFromAddress(&data, controlStatus, 0x4000+i);
-  //   char buffer[17];
-  //   sprintf(buffer, "A:0x%04x D: 0x%02x", currentAddress, data);
-  //   Serial.println(buffer);
-  // }
+  uint8_t data = 0;
+  for(int i =0; i< 25; i++){
+    uint16_t currentAddress = 0x4000 + i;
+    controlStatus = core_readDataFromAddress(&data, controlStatus, 0x4000+i);
+    char buffer[17];
+    sprintf(buffer, "A:0x%04x D: 0x%02x", currentAddress, data);
+    Serial.println(buffer);
+  }
 
   core_initializeDataPinsForWrite();
 
@@ -80,12 +76,13 @@ void setup() {
   controlStatus=control_clearReadAndWrite(controlStatus);
   control_releaseMSX();
   
+  
   while (true){
-      if(core_checkForCommandSignal()){
-        controlStatus = control_assertWrite(controlStatus);
-        core_WriteDataToAddress(0x6FFE, 0x6F);
-        controlStatus = control_clearReadAndWrite(controlStatus);
-      } 
+    if(core_checkForCommandSignal()){
+      Serial.println("Command Triggered");
+    }
+    
+  
   }
 }
 

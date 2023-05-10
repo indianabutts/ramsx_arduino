@@ -40,7 +40,7 @@ uint8_t core_readDataFromAddress(uint8_t *data, uint8_t controlStatus, uint16_t 
   return controlStatus;
 }
 bool core_checkForCommandSignal(){
-  return ~(PINC && B100000);
+  return !(PINC & B100000);
 }
 
 void core_writeDataToAddress(uint16_t address, uint8_t data){
@@ -56,7 +56,7 @@ void core_writeDataToAddress(uint16_t address, uint8_t data){
 }
 
 void core_initializeControlPins(){
-  DDRC = DDRC | B011111;
+  DDRC = B011111;
 }
 
 void core_initializeDataPinsForWrite() {
