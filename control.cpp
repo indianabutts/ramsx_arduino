@@ -35,14 +35,14 @@ uint8_t control_assertAddress16(uint8_t controlStatus){
   return controlStatus;
 }
 
-uint8_t control_setControlForBootloaderWrite(uint8_t controlStatus){
+void control_setControlForBootloaderWrite(uint8_t *controlStatus){
   // Serial.println("Setting up for Bootloader Write");
-  controlStatus = control_clearControlBit(CONTROL_A16, controlStatus);
-  controlStatus = control_clearControlBit(CONTROL_nWRITE, controlStatus);
-  controlStatus = control_clearControlBit(CONTROL_COMM_RESET, controlStatus);
-  controlStatus = control_setControlBit(CONTROL_nREAD, controlStatus);
-  controlStatus = control_setControlBit(CONTROL_HANDOVER, controlStatus);
-  return controlStatus;
+  (*controlStatus) = control_clearControlBit(CONTROL_A16, *controlStatus);
+  (*controlStatus) = control_clearControlBit(CONTROL_nWRITE, *controlStatus);
+  (*controlStatus) = control_clearControlBit(CONTROL_COMM_RESET, *controlStatus);
+  (*controlStatus) = control_setControlBit(CONTROL_nREAD, *controlStatus);
+  (*controlStatus) = control_setControlBit(CONTROL_HANDOVER, *controlStatus);
+  return;
 }
 
 uint8_t control_setControlBit(uint8_t controlPin, uint8_t controlStatus){

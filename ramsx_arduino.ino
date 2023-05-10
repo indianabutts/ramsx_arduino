@@ -23,7 +23,7 @@ void setup() {
   
   core_initializeDataPinsForWrite();
   
-  controlStatus = control_setControlForBootloaderWrite(controlStatus);
+  control_setControlForBootloaderWrite(&controlStatus);
 
   
   sd_t sd = sd_initializeSDCard(10);
