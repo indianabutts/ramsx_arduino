@@ -21,9 +21,9 @@ int main() {
   Serial.begin(115200);
   Serial.print("\n******* Starting New Run *******\n");
   
-  core_initializeDataPinsForWrite();
+  // core_initializeDataPinsForWrite();
   
-  controlStatus = control_setControlForBootloaderWrite(controlStatus);
+  // controlStatus = control_setControlForBootloaderWrite(controlStatus);
 
   
   sd_t sd = sd_initializeSDCard(10);
@@ -31,16 +31,50 @@ int main() {
   
   
   file_t root;
-  file_t romFile;
+  // file_t romFile;
   if(!root.open("/")){
     Serial.print("\nERROR: Error Opening Dir");
     sd.errorHalt(&Serial);
   }
-  // char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
-  // char* filename = "testrom_write.rom";
-  if(!romFile.open(&root, "Tank Battalion (1984)(Namcot)(JP).rom", O_READ)){
+
+  char* filename = "Dam Busters, The (1985)(Comptiq)(JP).rom";
+  programROM(&sd, &root, filename);
+  // programBootloader(&sd, &root);
+}
+
+
+void programROM(sd_t *sd, file_t *root, char* filename){
+  core_initializeDataPinsForWrite();
+  controlStatus = control_setControlForROMWrite(controlStatus);
+
+  file_t romFile;
+  if(!romFile.open(root, filename, O_READ)){
     Serial.print("\nERROR: Error Opening File");
-    sd.errorHalt(&Serial);
+    sd->errorHalt(&Serial);
+  }
+
+  controlStatus = core_writeFileToSRAM(romFile, controlStatus); 
+
+
+
+
+  controlStatus = control_handover(controlStatus);
+  controlStatus=control_clearReadAndWrite(controlStatus);
+  control_releaseMSX();
+}
+
+
+void programBootloader(sd_t *sd, file_t *root){
+  
+  core_initializeDataPinsForWrite();
+  
+  controlStatus = control_setControlForBootloaderWrite(controlStatus);
+
+  
+  file_t romFile;
+  if(!romFile.open(root, "out.rom", O_READ)){
+    Serial.print("\nERROR: Error Opening File");
+    sd->errorHalt(&Serial);
   }
   controlStatus = core_writeFileToSRAM(romFile, controlStatus); 
 
@@ -61,17 +95,7 @@ int main() {
   //   }
   // }
 
-  uint8_t data = 0;
-  for(int i =0; i< 25; i++){
-    uint16_t currentAddress = 0x4000 + i;
-    controlStatus = core_readDataFromAddress(&data, controlStatus, 0x4000+i);
-    char buffer[17];
-    sprintf(buffer, "A:0x%04x D: 0x%02x", currentAddress, data);
-    Serial.println(buffer);
-  }
-
-  core_initializeDataPinsForWrite();
-
+  
   controlStatus = control_handover(controlStatus);
   controlStatus=control_clearReadAndWrite(controlStatus);
   control_releaseMSX();
@@ -95,18 +119,4 @@ int main() {
   
   // }
 }
-
-
-
-
-
-
-
-void createUnsortedFileListFile(sd_t sd, file_t& directory, char* filename){
-
-  file_t indexFile;
-  indexFile.open(filename, O_WRITE);
-  indexFile.close();
-}
-
 
