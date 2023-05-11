@@ -13,7 +13,7 @@
 
 uint8_t controlStatus = 0;
 
-void setup() {
+int main() {
 
   
   core_initializeControlPins();
@@ -38,7 +38,7 @@ void setup() {
   }
   // char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
   // char* filename = "testrom_write.rom";
-  if(!romFile.open(&root, "write.rom", O_READ)){
+  if(!romFile.open(&root, "Tank Battalion (1984)(Namcot)(JP).rom", O_READ)){
     Serial.print("\nERROR: Error Opening File");
     sd.errorHalt(&Serial);
   }
@@ -76,17 +76,24 @@ void setup() {
   controlStatus=control_clearReadAndWrite(controlStatus);
   control_releaseMSX();
   
-  
-  while (true){
-    if(core_checkForCommandSignal()){
-      Serial.println("Command Triggered");
-    }
+  bool commandHandled = false;
+  // while (true){
+  //   if(core_checkForCommandSignal()){
+  //     Serial.println("Command Triggered");
+  //     control_haltMSX();
+  //     controlStatus = control_takeover(controlStatus);
+  //     controlStatus = core_readDataFromAddress(&data, controlStatus, 0x6FFF);
+  //     Serial.println(data);
+  //     controlStatus = control_assertWrite(controlStatus);
+  //     core_writeDataToAddress(0x6FFE, 0x6F);
+  //     controlStatus = control_handover(controlStatus);
+  //     controlStatus=control_clearReadAndWrite(controlStatus);
+
+  //     control_releaseMSX();
+  //   }
     
   
-  }
-}
-
-void loop() {
+  // }
 }
 
 

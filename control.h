@@ -9,6 +9,7 @@ void control_latchHighAddress();
 void control_latchLowAddress();
 void control_latchControl();
 uint8_t control_setControlForBootloaderWrite(uint8_t controlStatus);
+uint8_t control_setControlForROMWrite(uint8_t controlStatus);
 uint8_t control_setControlBit(uint8_t controlPin, uint8_t controlStatus);
 uint8_t control_clearControlBit(uint8_t controlPin, uint8_t controlStatus);
 void control_haltMSX();
