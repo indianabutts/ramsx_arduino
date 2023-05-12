@@ -3,7 +3,7 @@
 #include <SdFat.h>
 #define SD_FAT_TYPE 2
 #define SD_INDEX_FILE_NAME "._index"
-#define SD_DEFAULT_FILE_NAME_SIZE 28
+#define SD_DEFAULT_FILE_NAME_SIZE 21
 #define SD_DEFAULT_FILE_COUNT 21
 #define SD_DEFAULT_FILE_SIZE 5
 
