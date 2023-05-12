@@ -5,6 +5,7 @@
 #define SD_INDEX_FILE_NAME "._index"
 #define SD_DEFAULT_FILE_NAME_SIZE 28
 #define SD_DEFAULT_FILE_COUNT 21
+#define SD_DEFAULT_FILE_SIZE 5
 
 #if SD_FAT_TYPE == 0
 typedef SdFat sd_t;
@@ -25,8 +26,8 @@ typedef FsFile file_t;
 typedef struct RomFile{
   unsigned int fileSize;
   uint16_t offset;
-  char formattedFileSize[5];
   char fileName[SD_DEFAULT_FILE_NAME_SIZE];
+  char formattedFileSize[5];
 } SD_RomFile;
 
 sd_t sd_initializeSDCard(int pin);

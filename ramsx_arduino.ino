@@ -88,8 +88,13 @@ void programBootloader(sd_t& sd, file_t& root){
       uint8_t data;
       if(j==SD_DEFAULT_FILE_NAME_SIZE){
         data = 0;
-      } else {
+      } else if (j>=0 && j<21) {
         data = testFile.fileName[j];
+      } else if (j>=21 && j<22){
+        data = ' ';
+      } else if (j>=23){
+        char test[5] = " 32kb";
+        data =test[j-23]; 
       }
       
       core_writeDataToAddress(address, data);
