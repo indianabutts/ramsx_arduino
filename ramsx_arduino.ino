@@ -37,20 +37,21 @@ int main() {
     sd.errorHalt(&Serial);
   }
 
-  char* filename = "Dam Busters, The (1985)(Comptiq)(JP).rom";
-  programROM(&sd, &root, filename);
-  // programBootloader(&sd, &root);
+  char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
+  // programROM(&sd, &root, filename);
+  programBootloader(sd, root);
 }
 
 
-void programROM(sd_t *sd, file_t *root, char* filename){
+void programROM(sd_t& sd, file_t& root, char* filename){
   core_initializeDataPinsForWrite();
   controlStatus = control_setControlForROMWrite(controlStatus);
 
   file_t romFile;
-  if(!romFile.open(root, filename, O_READ)){
+  
+  if(!romFile.open(&root, filename, O_READ)){
     Serial.print("\nERROR: Error Opening File");
-    sd->errorHalt(&Serial);
+    sd.errorHalt(&Serial);
   }
 
   controlStatus = core_writeFileToSRAM(romFile, controlStatus); 
@@ -64,7 +65,7 @@ void programROM(sd_t *sd, file_t *root, char* filename){
 }
 
 
-void programBootloader(sd_t *sd, file_t *root){
+void programBootloader(sd_t& sd, file_t& root){
   
   core_initializeDataPinsForWrite();
   
@@ -72,28 +73,28 @@ void programBootloader(sd_t *sd, file_t *root){
 
   
   file_t romFile;
-  if(!romFile.open(root, "out.rom", O_READ)){
+  if(!romFile.open(&root, "out.rom", O_READ)){
     Serial.print("\nERROR: Error Opening File");
-    sd->errorHalt(&Serial);
+    sd.errorHalt(&Serial);
   }
   controlStatus = core_writeFileToSRAM(romFile, controlStatus); 
 
-  // seekToFileOffset(sd, root, SD_DEFAULT_FILE_COUNT, 0);
-  // for(int i=0; i<SD_DEFAULT_FILE_COUNT; i++){
-  //   SD_RomFile testFile = sd_getFileFromOffset(sd, root);
-  //   // Serial.println(testFile.fileName);
-  //   for (int j=0; j<SD_DEFAULT_FILE_NAME_SIZE+1; j++){
-  //     uint16_t address = 0x4010+i*(SD_DEFAULT_FILE_NAME_SIZE+1)+j;
-  //     uint8_t data;
-  //     if(j==SD_DEFAULT_FILE_NAME_SIZE){
-  //       data = 0;
-  //     } else {
-  //       data = testFile.fileName[j];
-  //     }
+  sd_seekToFileOffset(sd, root, SD_DEFAULT_FILE_COUNT, 0);
+  for(int i=0; i<SD_DEFAULT_FILE_COUNT; i++){
+    SD_RomFile testFile = sd_getFileFromOffset(sd, root);
+    // Serial.println(testFile.fileName);
+    for (int j=0; j<SD_DEFAULT_FILE_NAME_SIZE+1; j++){
+      uint16_t address = 0x4010+i*(SD_DEFAULT_FILE_NAME_SIZE+1)+j;
+      uint8_t data;
+      if(j==SD_DEFAULT_FILE_NAME_SIZE){
+        data = 0;
+      } else {
+        data = testFile.fileName[j];
+      }
       
-  //     core_writeDataToAddress(address, data);
-  //   }
-  // }
+      core_writeDataToAddress(address, data);
+    }
+  }
 
   
   controlStatus = control_handover(controlStatus);

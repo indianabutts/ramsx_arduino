@@ -16,7 +16,7 @@ sd_t sd_initializeSDCard(int pin) {
   // Serial.print("\nSD Card Initialized");
   return sd;
 }
-void seekToFileOffset(sd_t sd, file_t& directory, uint8_t fileCount, uint16_t pageNumber){
+void sd_seekToFileOffset(sd_t& sd, file_t& directory, uint8_t fileCount, uint16_t pageNumber){
   file_t file;
   if(!directory.isDir()) {
     Serial.println("Not a valid Directory, exiting from function");
@@ -32,7 +32,7 @@ void seekToFileOffset(sd_t sd, file_t& directory, uint8_t fileCount, uint16_t pa
   }
 }
 
-SD_RomFile sd_getFileFromOffset(sd_t sd, file_t& directory){
+SD_RomFile sd_getFileFromOffset(sd_t& sd, file_t& directory){
   // A Page is fileCount in size, so assuming fileCount of 21, and page number 1, this would offset by 21
   file_t file;
   char fileName[255];
