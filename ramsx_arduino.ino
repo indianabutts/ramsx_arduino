@@ -93,8 +93,11 @@ void programBootloader(sd_t& sd, file_t& root){
       } else if (j>=21 && j<22){
         data = ' ';
       } else if (j>=23){
-        char test[5] = " 32kb";
-        data =test[j-23]; 
+        char fileSizeBuffer[6];
+        char fileSizeString[4];
+        sprintf(fileSizeString, "%3d", testFile.fileSize/1000);
+        sprintf(fileSizeBuffer, "%3skb",fileSizeString);
+        data =fileSizeBuffer[j-23]; 
       }
       
       core_writeDataToAddress(address, data);
