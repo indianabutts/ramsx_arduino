@@ -31,10 +31,10 @@ typedef struct RomFile{
 } SD_RomFile;
 
 sd_t sd_initializeSDCard(int pin);
-
+uint16_t sd_totalFilesInDirectory(file_t& directory);
 void sd_createIndexFile(sd_t sd, file_t& directory, char* filename);
 void sd_seekToFileOffset(sd_t& sd, file_t& directory, uint8_t fileCount, uint16_t pageNumber);
 SD_RomFile sd_getFileFromOffset(sd_t& sd, file_t& directory);
-void sd_displayDirectoryContent(sd_t& sd, file_t& aDirectory, byte tabulation);
+void sd_displayDirectoryContent(sd_t sd, file_t& aDirectory, byte tabulation);
 SD_RomFile sd_getFileInfo(file_t& file);
 #endif
