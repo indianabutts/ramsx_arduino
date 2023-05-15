@@ -24,16 +24,16 @@ typedef FsFile file_t;
 #endif  // SD_FAT_TYPE
 
 typedef struct RomFile{
-  unsigned int fileSize;
+  uint16_t fileSize;
   uint16_t offset;
-  char fileName[SD_DEFAULT_FILE_NAME_SIZE];
-  char formattedFileSize[5];
+  char fileName[101];
 } SD_RomFile;
 
 sd_t sd_initializeSDCard(int pin);
 uint16_t sd_totalFilesInDirectory(file_t& directory);
-void sd_createIndexFile(sd_t sd, file_t& directory, char* filename);
+void sd_buildIndexFile(sd_t sd, file_t& directory, file_t& indexFile);
 void sd_seekToFileOffset(sd_t& sd, file_t& directory, uint8_t fileCount, uint16_t pageNumber);
+SD_RomFile* sd_getNFilenamesFromOffset(file_t& indexFile, uint8_t pageNumber, uint8_t count);
 SD_RomFile sd_getFileFromOffset(sd_t& sd, file_t& directory);
 void sd_displayDirectoryContent(sd_t sd, file_t& aDirectory, byte tabulation);
 SD_RomFile sd_getFileInfo(file_t& file);

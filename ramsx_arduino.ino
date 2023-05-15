@@ -13,37 +13,50 @@
 
 uint8_t controlStatus = 0;
 
-int main() {
-
-  
-  core_initializeControlPins();
-  control_haltMSX();
+void setup() {
   Serial.begin(115200);
   Serial.print("\n******* Starting New Run *******\n");
   
-  // core_initializeDataPinsForWrite();
   
-  // controlStatus = control_setControlForBootloaderWrite(controlStatus);
-
   
   sd_t sd = sd_initializeSDCard(10);
   sd.setDedicatedSpi(true);
   
   
   file_t root;
-  // file_t romFile;
+  file_t indexFile;
   if(!root.open("/")){
     Serial.print("\nERROR: Error Opening Dir");
     sd.errorHalt(&Serial);
   }
+  if(!root.exists("testIndex.txt")){
+    Serial.println("Index File does not exist - Building now");
+    indexFile.open(&root,"testIndex.txt", FILE_WRITE);
+    sd_buildIndexFile(sd, root, indexFile);
+    indexFile.close();
+  } else {
+    Serial.println("Index File Exists, Parsing Entries");
+    char line[120];
+    char *token;
+    int n;
+    uint8_t counter=0;
+    indexFile.open(&root,"testIndex.txt", O_RDONLY);
+    sd_getNFilenamesFromOffset(indexFile, 0, 21);
+    
+    
+  }
+  
 
-  // char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
-  char* filename = "vram.rom";
-  // programROM(sd, root, filename);
-  programBootloader(sd, root);
+
+
+  // // char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
+  // char* filename = "vram.rom";
+  // // programROM(sd, root, filename);
+  // programBootloader(sd, root);
+  Serial.print("\n******* Completed Run *******\n");
 }
 
-
+void loop(){}
 void programROM(sd_t& sd, file_t& root, char* filename){
   core_initializeDataPinsForWrite();
   controlStatus = control_setControlForROMWrite(controlStatus);
@@ -86,7 +99,7 @@ void programBootloader(sd_t& sd, file_t& root){
     // Serial.println(testFile.fileName);
     char fileSizeBuffer[6];
     char fileSizeString[4];
-    sprintf(fileSizeString, "%3d", testFile.fileSize/1000);
+    // sprintf(fileSizeString, "%3d", testFile.fileSize/1000);
     sprintf(fileSizeBuffer, "%3skb",fileSizeString);
     for (int j=0; j<31; j++){
       uint16_t address = 0x4060+i*40+j;

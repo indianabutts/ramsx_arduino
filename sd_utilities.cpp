@@ -103,19 +103,16 @@ uint16_t sd_totalFilesInDirectory(file_t& directory){
   file_t file;
   uint16_t counter=0;
   char fileName[255];
-  while(file.openNext(&directory, O_RDONLY)){
-    if(!file.isHidden()){
-      counter++;
-      file.getName(fileName, sizeof(fileName));
-      // Serial.print(counter);Serial.print(" ");Serial.print(fileName);Serial.print("\n");
-      file.close();
+  while (file.openNext(&directory, O_READ)) {
+    if (!file.isHidden()) {
+      counter ++;  
     }
+    file.close();
   }
-  Serial.println(counter);
   return counter;
 }
 
-void sd_createIndexFile(sd_t sd, file_t& directory, char* filename){
+void sd_buildIndexFile(sd_t sd, file_t& directory, file_t& indexFile){
   // Started: 2023/04/29
   // Will finish this later
   // I want to have the file list stored in this file, so that we don't need to constantly
@@ -125,5 +122,56 @@ void sd_createIndexFile(sd_t sd, file_t& directory, char* filename){
   // all the file names, especially assuming people have 100's of files.
   // The sorting should only happen if there is a difference, but if this is impossible to do, we would just
   // do it everytime the system is booted.
-}
+  file_t file;
   
+  char fileName[100];
+  char offsetValue[7];
+  char fileSize[6];
+  char lineBuffer[120];
+  if (!directory.isDir()) return;
+  directory.rewindDirectory();
+
+  unsigned int counter = 0;
+  while (file.openNext(&directory, O_READ)) {
+    if (!file.isHidden()) {
+      
+      file.getName(fileName, sizeof(fileName)); 
+      // fileName[strlen(fileName)]='\0';
+      if (file.isDir()) {
+        
+      } else {
+        file.seek(3);
+        byte msb = file.peek();
+        file.seek(2);
+        byte lsb = file.peek();
+        
+        uint16_t offset = (msb<<8) | lsb;
+        sprintf(offsetValue, "0x%04x", offset);
+        // sprintf(lineBuffer, "%d", counter);
+        // Serial.println(lineBuffer);
+        sprintf(fileSize, "%3d", (uint32_t)file.fileSize()/1000);
+        // sprintf(lineBuffer, "%d", (uint32_t)file.fileSize()/1000);
+        sprintf(lineBuffer, "%4d,%-100s,%6s,%3s\n", counter, fileName, offsetValue, fileSize);
+        
+        indexFile.write(lineBuffer);
+        indexFile.sync();
+        // Serial.println(lineBuffer);
+        // sprintf(lineBuffer, "%d,%s,%d, %d", counter, "Test", fileSize, offset);
+        // Serial.println(lineBuffer);
+      }
+      counter ++;
+    }
+    file.close();
+  }
+  return;
+}
+SD_RomFile* sd_getNFilenamesFromOffset(file_t& indexFile, uint8_t pageNumber, uint8_t count){
+  SD_RomFile files[count];
+  indexFile.seek(pageNumber*count*sizeof(char)*117);
+  char line[120];
+  for (uint8_t i = 0; i < count; i ++){
+    indexFile.fgets(line, sizeof(line));
+    Serial.println(line);
+  }
+  return files;
+}  
