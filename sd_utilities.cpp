@@ -92,24 +92,11 @@ void sd_displayDirectoryContent(sd_t sd, file_t& aDirectory, byte tabulation) {
   return;
 }
 
-uint16_t sd_totalFilesInDirectory(file_t& directory){
-  //TODO: Need to fix this, its only counting 1 pages worth of files for some reason
-  //      Not sure if that's a coincidence or something to do with the way I've written
-  //      the SD functions?
-  //      Also note that Serial output is funky since I started using pointers.
-  if(!directory.isDir()) return -1;
-
-  directory.rewindDirectory();
-  file_t file;
-  uint16_t counter=0;
-  char fileName[255];
-  while (file.openNext(&directory, O_READ)) {
-    if (!file.isHidden()) {
-      counter ++;  
-    }
-    file.close();
-  }
-  return counter;
+uint16_t sd_totalFilesInDirectory(file_t& indexFile){
+  indexFile.seekSet(indexFile.fileSize()-sizeof(char)*117);
+  char countBuffer[10];
+  indexFile.read(countBuffer,4);
+  return atoi(countBuffer);
 }
 
 void sd_buildIndexFile(sd_t sd, file_t& directory, file_t& indexFile){

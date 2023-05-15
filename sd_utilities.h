@@ -30,7 +30,7 @@ typedef struct RomFile{
 } SD_RomFile;
 
 sd_t sd_initializeSDCard(int pin);
-uint16_t sd_totalFilesInDirectory(file_t& directory);
+uint16_t sd_totalFilesInDirectory(file_t& indexFile);
 void sd_buildIndexFile(sd_t sd, file_t& directory, file_t& indexFile);
 void sd_seekToFileOffset(sd_t& sd, file_t& directory, uint8_t fileCount, uint16_t pageNumber);
 SD_RomFile* sd_getNFilenamesFromOffset(file_t& indexFile, uint8_t pageNumber, uint8_t count);

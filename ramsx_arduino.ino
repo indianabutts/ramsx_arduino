@@ -41,7 +41,8 @@ void setup() {
     int n;
     uint8_t counter=0;
     indexFile.open(&root,"testIndex.txt", O_RDONLY);
-    sd_getNFilenamesFromOffset(indexFile, 0, 21);
+    Serial.println(sd_totalFilesInDirectory(indexFile));
+    // sd_getNFilenamesFromOffset(indexFile, 0, 21);
     
     
   }
