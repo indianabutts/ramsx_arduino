@@ -152,13 +152,39 @@ void sd_buildIndexFile(sd_t sd, file_t& directory, file_t& indexFile){
   }
   return;
 }
-SD_RomFile* sd_getNFilenamesFromOffset(file_t& indexFile, uint8_t pageNumber, uint8_t count){
-  SD_RomFile files[count];
-  indexFile.seek(pageNumber*count*sizeof(char)*117);
+SD_RomFile sd_getFilenameFromOffset(file_t& indexFile, uint8_t pageNumber, uint8_t pageEntries, uint8_t offset){
+  indexFile.seek(pageNumber*pageEntries*sizeof(char)*117+(offset*sizeof(char)*117));
   char line[120];
-  for (uint8_t i = 0; i < count; i ++){
-    indexFile.fgets(line, sizeof(line));
-    Serial.println(line);
-  }
-  return files;
+  char *token;
+    // 21,Sparkie (1983)(Sony)(JP).rom, 0x00cf,  8
+  SD_RomFile currentFile;
+  indexFile.fgets(line, sizeof(line));
+  token = strtok(line,",");
+  token = strtok(NULL,",");
+  sd_remove_space(token);
+  strcpy(currentFile.fileName,token);
+  token = strtok(NULL,",");
+  currentFile.offset = (uint16_t)strtol(token,NULL,0);
+  token = strtok(NULL,",");
+  currentFile.fileSize = atoi(token);
+  return currentFile;
 }  
+
+void sd_remove_space(char* s){
+  char *end;
+
+  // Trim leading space
+  while(isspace((unsigned char)*s)) s++;
+
+  if(*s == 0)  // All spaces?
+    return s;
+
+  // Trim trailing space
+  end = s + strlen(s) - 1;
+  while(end > s && isspace((unsigned char)*end)) end--;
+
+  // Write new null terminator character
+  end[1] = '\0';
+
+  return s;
+}
