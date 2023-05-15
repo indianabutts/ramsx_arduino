@@ -54,12 +54,11 @@ void setup() {
   // char* filename = "vram.rom";
   programROM(sd, root, filename);
   // programBootloader(sd, indexFile);
-  while(true);
   Serial.print("\n******* Completed Run *******\n");
   
 }
 
-void loop(){}
+
 void programROM(sd_t& sd, file_t& root, char* filename){
   core_initializeDataPinsForWrite();
   controlStatus = control_setControlForROMWrite(controlStatus);
@@ -82,11 +81,11 @@ void programROM(sd_t& sd, file_t& root, char* filename){
 }
 
 
-void programBootloader(sd_t& sd, file_t& indexFile){
+void programBootloader(sd_t& sd, file_t& root, file_t& indexFile){
   Serial.println("Programming Bootloader");
   core_initializeDataPinsForWrite();
   indexFile.close();
-  if(!indexFile.open("out.rom", O_RDONLY)){
+  if(!indexFile.open(&root, "out.rom", O_RDONLY)){
      Serial.print("\nERROR: Error Opening File");
     sd.errorHalt(&Serial);
   };
@@ -148,4 +147,6 @@ void programBootloader(sd_t& sd, file_t& indexFile){
   
   // }
 }
+
+void loop(){}
 
