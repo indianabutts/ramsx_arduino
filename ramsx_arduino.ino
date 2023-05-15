@@ -91,14 +91,14 @@ void programBootloader(sd_t& sd, file_t& root){
     for (int j=0; j<31; j++){
       uint16_t address = 0x4060+i*40+j;
       uint8_t data;
-      if(j==0 | (j>20 && j<24) | j==25){
+      if((j>20 && j<24) | j==25){
         data = ' ';
       } else if (j>0 && j<21){
         data = testFile.fileName[j-1];
       } else if (j>=26){
         data =fileSizeBuffer[j-26]; 
       }
-      if(j!=24){
+      if(j!=24 && j!=0){
         core_writeDataToAddress(address, data);
       }
     }
