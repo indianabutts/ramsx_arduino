@@ -103,13 +103,13 @@ uint8_t control_clearReadAndWrite(uint8_t controlStatus){
 }
 
 uint8_t control_handover(uint8_t controlStatus) {
-  Serial.println("\nHanding Over");
+  Serial.println(F("\nHanding Over"));
   controlStatus = control_clearControlBit(CONTROL_HANDOVER, controlStatus);
   return controlStatus;
 }
 
 uint8_t control_takeover(uint8_t controlStatus) {
-  Serial.println("\nHanding Over");
+  Serial.println(F("\nHanding Over"));
   controlStatus = control_setControlBit(CONTROL_HANDOVER, controlStatus);
   return controlStatus;
 }

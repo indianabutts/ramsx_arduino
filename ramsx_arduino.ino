@@ -14,8 +14,11 @@
 uint8_t controlStatus = 0;
 
 void setup() {
+  core_initializeControlPins();
+  control_haltMSX();
+
   Serial.begin(115200);
-  Serial.print("\n******* Starting New Run *******\n");
+  Serial.print(F("\n******* Starting New Run *******\n"));
   
   
   
@@ -24,19 +27,19 @@ void setup() {
   
   
   file_t root;
-  // file_t indexFile;
+  file_t indexFile;
   if(!root.open("/")){
-    Serial.print("\nERROR: Error Opening Dir");
+    Serial.print(F("\nERROR: Error Opening Dir"));
     sd.errorHalt(&Serial);
   }
   if(!root.exists("testIndex.txt")){
-    Serial.println("Index File does not exist - Building now");
-    // indexFile.open(&root,"testIndex.txt", FILE_WRITE);
-    // sd_buildIndexFile(sd, root, indexFile);
-    // indexFile.close();
+    Serial.println(F("Index File does not exist - Building now"));
+    indexFile.open(&root,"testIndex.txt", FILE_WRITE);
+    sd_buildIndexFile(sd, root, indexFile);
+    indexFile.close();
   } else {
-    Serial.println("Index File Exists, Accessing File");
-    // indexFile.open(&root,"testIndex.txt", O_RDONLY);    
+    Serial.println(F("Index File Exists, Accessing File"));
+    indexFile.open(&root,"testIndex.txt", O_RDONLY);    
   }
   
   // bootloader.open(&root, "out.rom", O_READ);
@@ -52,9 +55,9 @@ void setup() {
 
   char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
   // char* filename = "vram.rom";
-  programROM(sd, root, filename);
-  // programBootloader(sd, indexFile);
-  Serial.print("\n******* Completed Run *******\n");
+  // programROM(sd, root, filename);
+  programBootloader(sd, root, indexFile);
+  Serial.print(F("\n******* Completed Run *******\n"));
   
 }
 
@@ -66,7 +69,7 @@ void programROM(sd_t& sd, file_t& root, char* filename){
   file_t romFile;
   
   if(!romFile.open(&root, filename, O_READ)){
-    Serial.print("\nERROR: Error Opening File");
+    Serial.print(F("\nERROR: Error Opening File"));
     sd.errorHalt(&Serial);
   }
 
@@ -82,31 +85,35 @@ void programROM(sd_t& sd, file_t& root, char* filename){
 
 
 void programBootloader(sd_t& sd, file_t& root, file_t& indexFile){
-  Serial.println("Programming Bootloader");
+  Serial.println(F("Programming Bootloader"));
   core_initializeDataPinsForWrite();
-  indexFile.close();
-  if(!indexFile.open(&root, "out.rom", O_RDONLY)){
-     Serial.print("\nERROR: Error Opening File");
+  file_t rom;
+  if(!rom.open(&root, "out.rom", O_RDONLY)){
+     Serial.print(F("\nERROR: Error Opening File"));
     sd.errorHalt(&Serial);
   };
   controlStatus = control_setControlForBootloaderWrite(controlStatus);
 
   
  
-  controlStatus = core_writeFileToSRAM(indexFile, controlStatus); 
-  indexFile.close();
-  indexFile.open("testIndex.txt");
+  controlStatus = core_writeFileToSRAM(rom, controlStatus); 
+  // indexFile.open("testIndex.txt");
 
   uint8_t totalPages = (sd_totalFilesInDirectory(indexFile)+20)/21;
   // sd_getFilenameFromOffset(indexFile, 1, 21,3);
     
-
+  char totalPagesString[4];
+  sprintf(totalPagesString, "%-3d", totalPages);
   for(int i=0; i<21; i++){
     SD_RomFile currentFile = sd_getFilenameFromOffset(indexFile, 0, 21,i);
+    Serial.println(currentFile.fileName);
     char fileSizeBuffer[6];
     char fileSizeString[4];
+    
     sprintf(fileSizeString, "%3d", currentFile.fileSize);
     sprintf(fileSizeBuffer, "%3skb",fileSizeString);
+    
+    Serial.println(totalPagesString);
     for (int j=0; j<31; j++){
       uint16_t address = 0x4060+i*40+j;
       uint8_t data;
@@ -123,6 +130,9 @@ void programBootloader(sd_t& sd, file_t& root, file_t& indexFile){
     }
   }
 
+  core_writeDataToAddress(0x43A8+32, totalPagesString[0]);
+  core_writeDataToAddress(0x43A8+33, totalPagesString[1]);
+  core_writeDataToAddress(0x43A8+34, totalPagesString[2]);
   
   controlStatus = control_handover(controlStatus);
   controlStatus=control_clearReadAndWrite(controlStatus);

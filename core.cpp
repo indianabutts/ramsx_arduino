@@ -96,15 +96,15 @@ uint8_t core_writeFileToSRAM(const file_t &romFile, uint8_t controlStatus){
   }
   controlStatus = control_setChipSelect(chipSelect, controlStatus);
   core_initializeDataPinsForWrite();
-  Serial.print("\nStarting ROM Read with Offset ");
+  Serial.print(F("\nStarting ROM Read with Offset "));
   Serial.print(offset, HEX);
-  Serial.print(" and size ");
+  Serial.print(F(" and size "));
   if(romSize>1000){
   Serial.print(romSize/1000);
-  Serial.print(" kbytes");
+  Serial.print(F(" kbytes"));
   } else {
     Serial.print(romSize);
-  Serial.print(" bytes");
+  Serial.print(F(" bytes"));
   }
   long int startTime = millis();
   unsigned int address = 0;
@@ -118,9 +118,9 @@ uint8_t core_writeFileToSRAM(const file_t &romFile, uint8_t controlStatus){
     address++;
   }
   long int completeTime = millis();
-  Serial.print("\nCompleted ROM Read in ");
+  Serial.print(F("\nCompleted ROM Read in "));
   Serial.print(completeTime - startTime);
-  Serial.print(" ms");
-  Serial.print("\nHanding over to MSX, using signal ");Serial.print(chipSelect);Serial.print("\n");
+  Serial.print(F(" ms"));
+  Serial.print(F("\nHanding over to MSX, using signal "));Serial.print(chipSelect);Serial.print(F("\n"));
   return controlStatus;
 }
