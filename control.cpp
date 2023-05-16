@@ -39,7 +39,7 @@ uint8_t control_setControlForBootloaderWrite(uint8_t controlStatus){
   // Serial.println("Setting up for Bootloader Write");
   controlStatus = control_clearControlBit(CONTROL_A16, controlStatus);
   controlStatus = control_clearControlBit(CONTROL_nWRITE, controlStatus);
-  controlStatus = control_clearControlBit(CONTROL_COMM_RESET, controlStatus);
+  controlStatus = control_setControlBit(CONTROL_COMM_RESET, controlStatus);
   controlStatus = control_setControlBit(CONTROL_nREAD, controlStatus);
   controlStatus = control_setControlBit(CONTROL_HANDOVER, controlStatus);
   return controlStatus;
@@ -48,7 +48,7 @@ uint8_t control_setControlForBootloaderWrite(uint8_t controlStatus){
 uint8_t control_setControlForROMWrite(uint8_t controlStatus){
   controlStatus = control_setControlBit(CONTROL_A16, controlStatus);
   controlStatus = control_clearControlBit(CONTROL_nWRITE, controlStatus);
-  controlStatus = control_clearControlBit(CONTROL_COMM_RESET, controlStatus);
+  controlStatus = control_setControlBit(CONTROL_COMM_RESET, controlStatus);
   controlStatus = control_setControlBit(CONTROL_nREAD, controlStatus);
   controlStatus = control_setControlBit(CONTROL_HANDOVER, controlStatus);
   return controlStatus;
@@ -64,6 +64,12 @@ uint8_t control_clearControlBit(uint8_t controlPin, uint8_t controlStatus){
   controlStatus &= ~(1UL<<controlPin);
   core_setDataPinsValue(controlStatus);
   control_latchControl();
+  return controlStatus;
+}
+
+uint8_t control_clearCommandFlag(uint8_t controlStatus){
+  controlStatus = control_clearControlBit(CONTROL_COMM_RESET, controlStatus);
+  controlStatus = control_setControlBit(CONTROL_COMM_RESET, controlStatus);
   return controlStatus;
 }
 
@@ -109,7 +115,7 @@ uint8_t control_handover(uint8_t controlStatus) {
 }
 
 uint8_t control_takeover(uint8_t controlStatus) {
-  Serial.println(F("\nHanding Over"));
+  Serial.println(F("\Taking Over"));
   controlStatus = control_setControlBit(CONTROL_HANDOVER, controlStatus);
   return controlStatus;
 }

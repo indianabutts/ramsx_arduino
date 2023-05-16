@@ -12,6 +12,7 @@
 #include "control.h"
 
 uint8_t controlStatus = 0;
+uint8_t currentPage = 0;
 
 void setup() {
   core_initializeControlPins();
@@ -42,20 +43,8 @@ void setup() {
     indexFile.open(&root,"testIndex.txt", O_RDONLY);    
   }
   
-  // bootloader.open(&root, "out.rom", O_READ);
-  // SD_RomFile currentFile = sd_getFilenameFromOffset(indexFile, 0, 21,0);
-  // Serial.println(currentFile.fileName);
-  // indexFile.close();
-  
-  // if(!indexFile.open(&root, "out.rom", O_READ)){
-  //   Serial.print("\nERROR: Error Opening File");
-  //   sd.errorHalt(&Serial);
-  // }
-
-
   char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
-  // char* filename = "vram.rom";
-  // programROM(sd, root, filename);
+  
   programBootloader(sd, root, indexFile);
   Serial.print(F("\n******* Completed Run *******\n"));
   
@@ -78,9 +67,9 @@ void programROM(sd_t& sd, file_t& root, char* filename){
 
 
 
-  controlStatus = control_handover(controlStatus);
-  controlStatus=control_clearReadAndWrite(controlStatus);
-  control_releaseMSX();
+  // controlStatus = control_handover(controlStatus);
+  // controlStatus=control_clearReadAndWrite(controlStatus);
+  // control_releaseMSX();
 }
 
 
@@ -97,23 +86,19 @@ void programBootloader(sd_t& sd, file_t& root, file_t& indexFile){
   
  
   controlStatus = core_writeFileToSRAM(rom, controlStatus); 
-  // indexFile.open("testIndex.txt");
 
   uint8_t totalPages = (sd_totalFilesInDirectory(indexFile)+20)/21;
-  // sd_getFilenameFromOffset(indexFile, 1, 21,3);
     
   char totalPagesString[4];
   sprintf(totalPagesString, "%-3d", totalPages);
   for(int i=0; i<21; i++){
     SD_RomFile currentFile = sd_getFilenameFromOffset(indexFile, 0, 21,i);
-    Serial.println(currentFile.fileName);
     char fileSizeBuffer[6];
     char fileSizeString[4];
     
     sprintf(fileSizeString, "%3d", currentFile.fileSize);
     sprintf(fileSizeBuffer, "%3skb",fileSizeString);
     
-    Serial.println(totalPagesString);
     for (int j=0; j<31; j++){
       uint16_t address = 0x4060+i*40+j;
       uint8_t data;
@@ -133,29 +118,48 @@ void programBootloader(sd_t& sd, file_t& root, file_t& indexFile){
   core_writeDataToAddress(0x43A8+32, totalPagesString[0]);
   core_writeDataToAddress(0x43A8+33, totalPagesString[1]);
   core_writeDataToAddress(0x43A8+34, totalPagesString[2]);
+  // core_writeDataToAddress(0x6FFE, 0xA2);
   
   controlStatus = control_handover(controlStatus);
-  controlStatus=control_clearReadAndWrite(controlStatus);
+  // controlStatus=control_clearReadAndWrite(controlStatus);
   control_releaseMSX();
-  
-  // bool commandHandled = false;
-  // while (true){
-  //   if(core_checkForCommandSignal()){
-  //     Serial.println("Command Triggered");
-  //     control_haltMSX();
-  //     controlStatus = control_takeover(controlStatus);
-  //     controlStatus = core_readDataFromAddress(&data, controlStatus, 0x6FFF);
-  //     Serial.println(data);
-  //     controlStatus = control_assertWrite(controlStatus);
-  //     core_writeDataToAddress(0x6FFE, 0x6F);
-  //     controlStatus = control_handover(controlStatus);
-  //     controlStatus=control_clearReadAndWrite(controlStatus);
+  uint8_t data;
+  bool programCommand = false;
+  delay(1000);
+  bool commandState = false;
+  bool lastCommandState = false;
+  while (!programCommand){
+    commandState = core_checkForCommandSignal();
+    // Serial.print(commandState); Serial.print(F(", L: ")); Serial.print(lastCommandState);Serial.print(F("\n"));
+    if((commandState!=lastCommandState) && commandState){
+      controlStatus = control_takeover(controlStatus);
+      Serial.println(F("Command Triggered"));
+      control_haltMSX();
+      controlStatus = core_readDataFromAddress(&data, controlStatus, 0x6FF0);
+      if(data == 0x60){
+        programCommand=true;
+        uint8_t romIndex;
+        controlStatus = core_readDataFromAddress(&romIndex, controlStatus, 0x6FF1);
+        
 
-  //     control_releaseMSX();
-  //   }
-    
+        SD_RomFile selectedFile = sd_getFilenameFromOffset(indexFile, currentPage, 21, romIndex);
+        Serial.print(F("Program ROM Command Issued for ")); Serial.print(selectedFile.fileName);
+        programROM(sd, root, selectedFile.fileName);
+        // programROM(sd, root, filename);
+
+      }
+      core_initializeDataPinsForWrite();
+      Serial.println(data, HEX);
+      controlStatus = control_assertWrite(controlStatus);
+      core_writeDataToAddress(0x6FFE, 0xA2);    
+      controlStatus = control_handover(controlStatus);
+      control_releaseMSX();
+      // delay(1000);
+      // controlStatus = control_clearCommandFlag(controlStatus);
+    }
+    lastCommandState = commandState;
   
-  // }
+  }
 }
 
 void loop(){}

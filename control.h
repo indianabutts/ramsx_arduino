@@ -21,6 +21,7 @@ uint8_t control_assertWrite(uint8_t controlStatus);
 uint8_t control_assertRead(uint8_t controlStatus);
 void control_selectRAM();
 void control_deselectRAM();
+uint8_t control_clearCommandFlag(uint8_t controlStatus);
 uint8_t control_clearReadAndWrite(uint8_t controlStatus);
 uint8_t control_handover(uint8_t controlStatus);
 uint8_t control_takeover(uint8_t controlStatus);
