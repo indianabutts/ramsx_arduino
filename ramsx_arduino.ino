@@ -12,8 +12,8 @@
 #include "control.h"
 
 uint8_t controlStatus = 0;
-uint8_t currentPage = 0;
-
+uint8_t currentPage = 26;
+uint8_t totalPages = 0;
 void setup() {
   core_initializeControlPins();
   control_haltMSX();
@@ -33,17 +33,18 @@ void setup() {
     Serial.print(F("\nERROR: Error Opening Dir"));
     sd.errorHalt(&Serial);
   }
-  if(!root.exists("testIndex.txt")){
+  
+  if(!root.exists(".index")){
     Serial.println(F("Index File does not exist - Building now"));
-    indexFile.open(&root,"testIndex.txt", FILE_WRITE);
+    indexFile.open(&root,".index", FILE_WRITE);
+    int bits = indexFile.attrib();
+    indexFile.attrib(bits | FS_ATTRIB_HIDDEN);
     sd_buildIndexFile(sd, root, indexFile);
     indexFile.close();
   } else {
     Serial.println(F("Index File Exists, Accessing File"));
-    indexFile.open(&root,"testIndex.txt", O_RDONLY);    
+    indexFile.open(&root,".index", O_RDONLY);    
   }
-  
-  char* filename = "Tank Battalion (1984)(Namcot)(JP).rom";
   
   programBootloader(sd, root, indexFile);
   Serial.print(F("\n******* Completed Run *******\n"));
@@ -87,12 +88,12 @@ void programBootloader(sd_t& sd, file_t& root, file_t& indexFile){
  
   controlStatus = core_writeFileToSRAM(rom, controlStatus); 
 
-  uint8_t totalPages = (sd_totalFilesInDirectory(indexFile)+20)/21;
+  totalPages = (sd_totalFilesInDirectory(indexFile)+20)/21;
     
   char totalPagesString[4];
   sprintf(totalPagesString, "%-3d", totalPages);
   for(int i=0; i<21; i++){
-    SD_RomFile currentFile = sd_getFilenameFromOffset(indexFile, 0, 21,i);
+    SD_RomFile currentFile = sd_getFilenameFromOffset(indexFile, currentPage, 21,i);
     char fileSizeBuffer[6];
     char fileSizeString[4];
     
@@ -136,6 +137,7 @@ void programBootloader(sd_t& sd, file_t& root, file_t& indexFile){
       Serial.println(F("Command Triggered"));
       control_haltMSX();
       controlStatus = core_readDataFromAddress(&data, controlStatus, 0x6FF0);
+      Serial.println(data, HEX);
       if(data == 0x60){
         programCommand=true;
         uint8_t romIndex;
@@ -145,11 +147,54 @@ void programBootloader(sd_t& sd, file_t& root, file_t& indexFile){
         SD_RomFile selectedFile = sd_getFilenameFromOffset(indexFile, currentPage, 21, romIndex);
         Serial.print(F("Program ROM Command Issued for ")); Serial.print(selectedFile.fileName);
         programROM(sd, root, selectedFile.fileName);
-        // programROM(sd, root, filename);
 
       }
+      else if(data == 0x40 || data == 0x4F){
+        Serial.println(F("Page Up Command Issued"));
+        if(data==0x40){
+          currentPage ++;
+          currentPage = currentPage % totalPages;
+        } else {
+          if(currentPage==0){
+            currentPage = totalPages-1;
+          }else {
+            currentPage --;
+          }
+          
+          
+        }
+        core_initializeDataPinsForWrite();
+        controlStatus = control_assertWrite(controlStatus);
+        char currentPageString[4];
+        sprintf(currentPageString, "%3d", currentPage+1);
+        for(int i=0; i<21; i++){
+          SD_RomFile currentFile = sd_getFilenameFromOffset(indexFile, currentPage, 21,i);
+          char fileSizeBuffer[6];
+          char fileSizeString[4];
+          
+          sprintf(fileSizeString, "%3d", currentFile.fileSize);
+          sprintf(fileSizeBuffer, "%3skb",fileSizeString);
+          
+          for (int j=0; j<31; j++){
+            uint16_t address = 0x4060+i*40+j;
+            uint8_t data;
+            if((j>20 && j<24) | j==25){
+              data = ' ';
+            } else if (j>0 && j<21){
+              data = currentFile.fileName[j-1];
+            } else if (j>=26){
+              data =fileSizeBuffer[j-26]; 
+            }
+            if(j!=24 && j!=0){
+              core_writeDataToAddress(address, data);
+            }
+          }
+        }
+        core_writeDataToAddress(0x43A8+28, currentPageString[0]);
+        core_writeDataToAddress(0x43A8+29, currentPageString[1]);
+        core_writeDataToAddress(0x43A8+30, currentPageString[2]);
+      }
       core_initializeDataPinsForWrite();
-      Serial.println(data, HEX);
       controlStatus = control_assertWrite(controlStatus);
       core_writeDataToAddress(0x6FFE, 0xA2);    
       controlStatus = control_handover(controlStatus);

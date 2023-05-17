@@ -122,7 +122,8 @@ void sd_buildIndexFile(sd_t sd, file_t& directory, file_t& indexFile){
   while (file.openNext(&directory, O_READ)) {
     if (!file.isHidden()) {
       
-      file.getName(fileName, sizeof(fileName)); 
+      file.getName(fileName, sizeof(fileName));
+      
       // fileName[strlen(fileName)]='\0';
       if (file.isDir()) {
         
@@ -138,13 +139,13 @@ void sd_buildIndexFile(sd_t sd, file_t& directory, file_t& indexFile){
         // Serial.println(lineBuffer);
         sprintf(fileSize, "%3d", (uint32_t)file.fileSize()/1000);
         // sprintf(lineBuffer, "%d", (uint32_t)file.fileSize()/1000);
-        sprintf(lineBuffer, "%4d,%-100s,%6s,%3s\n", counter, fileName, offsetValue, fileSize);
-        
+        sprintf(lineBuffer, "%4d:%-100s:%6s:%3s\n", counter, fileName, offsetValue, fileSize);
         indexFile.write(lineBuffer);
         indexFile.sync();
         // Serial.println(lineBuffer);
         // sprintf(lineBuffer, "%d,%s,%d, %d", counter, "Test", fileSize, offset);
         // Serial.println(lineBuffer);
+        
       }
       counter ++;
     }
@@ -153,19 +154,22 @@ void sd_buildIndexFile(sd_t sd, file_t& directory, file_t& indexFile){
   return;
 }
 SD_RomFile sd_getFilenameFromOffset(file_t& indexFile, uint8_t pageNumber, uint8_t pageEntries, uint8_t offset){
-  indexFile.seek(pageNumber*pageEntries*sizeof(char)*117+(offset*sizeof(char)*117));
+  indexFile.seek((pageNumber*pageEntries+offset)*sizeof(char)*117);
   char line[120];
   char *token;
     // 21,Sparkie (1983)(Sony)(JP).rom, 0x00cf,  8
+    
   SD_RomFile currentFile;
-  indexFile.fgets(line, sizeof(line));
-  token = strtok(line,",");
-  token = strtok(NULL,",");
+  // indexFile.read(line, 118*sizeof(char));
+  indexFile.fgets(line, 117*sizeof(char));
+  Serial.println(line);
+  token = strtok(line,":");
+  token = strtok(NULL,":");
   sd_remove_space(token);
   strcpy(currentFile.fileName,token);
-  token = strtok(NULL,",");
+  token = strtok(NULL,":");
   currentFile.offset = (uint16_t)strtol(token,NULL,0);
-  token = strtok(NULL,",");
+  token = strtok(NULL,":");
   currentFile.fileSize = atoi(token);
   return currentFile;
 }  

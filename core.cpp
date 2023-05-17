@@ -87,7 +87,8 @@ uint8_t core_writeFileToSRAM(const file_t &romFile, uint8_t controlStatus){
   }
 
   if (romSize >= 32000) {
-    chipSelect = 2;
+    offset = 0;
+    chipSelect = 3;
   }
 
   if(romSize >=64000){
@@ -108,12 +109,16 @@ uint8_t core_writeFileToSRAM(const file_t &romFile, uint8_t controlStatus){
   }
   long int startTime = millis();
   unsigned int address = 0;
-  
   controlStatus = control_assertWrite(controlStatus);
   romFile.seek(0);
+  uint8_t data;
+
+  core_writeDataToAddress(0x4000, 0xFF);
+  core_writeDataToAddress(0x8000, 0xFF);
+  core_writeDataToAddress(0x0000, 0xFF);
   while (romFile.available()) {
     unsigned int offsetAddress = address + offset;
-    byte data = romFile.read();
+    data = romFile.read();
     core_writeDataToAddress(offsetAddress, data);
     address++;
   }
