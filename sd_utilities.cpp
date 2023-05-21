@@ -154,7 +154,8 @@ void sd_buildIndexFile(sd_t sd, file_t& directory, file_t& indexFile){
   return;
 }
 SD_RomFile sd_getFilenameFromOffset(file_t& indexFile, uint8_t pageNumber, uint8_t pageEntries, uint8_t offset){
-  indexFile.seek((pageNumber*pageEntries+offset)*sizeof(char)*117);
+  uint32_t seekPosition = (uint32_t)((uint32_t)pageNumber*(uint32_t)pageEntries+(uint32_t)offset)*(uint32_t)sizeof(char)*(uint32_t)117;
+  indexFile.seek(seekPosition);
   char line[120];
   char *token;
     // 21,Sparkie (1983)(Sony)(JP).rom, 0x00cf,  8

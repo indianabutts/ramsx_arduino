@@ -12,7 +12,7 @@
 #include "control.h"
 
 uint8_t controlStatus = 0;
-uint8_t currentPage = 26;
+uint8_t currentPage = 27;
 uint8_t totalPages = 0;
 void setup() {
   core_initializeControlPins();
@@ -148,6 +148,22 @@ void programBootloader(sd_t& sd, file_t& root, file_t& indexFile){
         Serial.print(F("Program ROM Command Issued for ")); Serial.print(selectedFile.fileName);
         programROM(sd, root, selectedFile.fileName);
 
+      }
+      else if(data == 0x6F){
+        
+        char searchTerm[21];
+        uint8_t byte;
+        for(uint8_t i =0; i<21;i++){
+          controlStatus = core_readDataFromAddress(&byte, controlStatus, 0x6F00+i);
+          Serial.print(byte, HEX);
+          if(byte==0xFF || i==20){
+            searchTerm[i]='\0';
+            break;
+          }else{
+            searchTerm[i] = byte;
+          }
+        }
+        Serial.print(F("Search Command Issued for \""));Serial.print(searchTerm);Serial.print(F("\"\n"));
       }
       else if(data == 0x40 || data == 0x4F){
         Serial.println(F("Page Up Command Issued"));

@@ -86,10 +86,9 @@ uint8_t core_writeFileToSRAM(const file_t &romFile, uint8_t controlStatus){
     chipSelect = 0;
   }
 
-  if (romSize >= 32000) {
-    offset = 0;
-    chipSelect = 3;
-  }
+  // if (romSize >= 18000 && romSize <= 33000) {
+  //   // chipSelect = 2;
+  // }
 
   if(romSize >=64000){
     offset = 0;
