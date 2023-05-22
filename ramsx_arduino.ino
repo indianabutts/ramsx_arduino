@@ -12,7 +12,7 @@
 #include "control.h"
 
 uint8_t controlStatus = 0;
-uint8_t currentPage = 27;
+uint8_t currentPage = 0;
 uint8_t totalPages = 0;
 void setup() {
   core_initializeControlPins();
